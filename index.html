@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MNH RCH Pilot - Under 5 Triage</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- External Libraries -->
+    <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-brand">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2v20M2 12h20"/>
+            </svg>
+            <h1>MNH RCH Triage</h1>
+        </div>
+        <div id="network_status" class="network-badge offline">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+                <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+                <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+                <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+                <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+                <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                <line x1="12" y1="20" x2="12.01" y2="20"></line>
+            </svg>
+            <span id="network_text">OFFLINE</span>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Patient Context Card -->
+        <div class="patient-card">
+            <div class="patient-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </div>
+            <div class="patient-info">
+                <h2>Baby Neema</h2>
+                <p>Mother: Mama Sarah | Age: 8 Months</p>
+            </div>
+        </div>
+
+        <!-- Vitals Form -->
+        <form id="vitals_form" class="vitals-card">
+            <h3>Record Vitals</h3>
+            
+            <div class="form-group">
+                <label for="weight_kg">Weight (kg)</label>
+                <input type="number" step="0.01" id="weight_kg" placeholder="e.g., 7.5">
+            </div>
+
+            <div class="form-group">
+                <label for="muac_mm">MUAC (mm) - Arm Circumference</label>
+                <input type="number" id="muac_mm" oninput="calculateNutritionStatus()" placeholder="e.g., 120">
+            </div>
+
+            <div class="form-group">
+                <label for="temperature">Temperature (°C)</label>
+                <input type="number" step="0.1" id="temperature" placeholder="e.g., 36.5">
+            </div>
+
+            <!-- Smart Status Box -->
+            <div id="nutrition_status" class="status-box neutral">
+                <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span id="status_text">Enter MUAC to check nutritional status</span>
+            </div>
+
+            <button type="button" onclick="saveVitalsOffline()" class="btn-primary">
+                Save & Next Station
+            </button>
+        </form>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
