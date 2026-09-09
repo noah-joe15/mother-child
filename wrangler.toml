@@ -1,0 +1,11 @@
+name = "mother-child"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# If you're using Workers Sites (recommended for HTML files)
+[site]
+bucket = "./public"
+
+# Environment variables (optional)
+[vars]
+SUPABASE_URL = "https://fmaaudmdgmgklvqcmvad.supabase.co"
