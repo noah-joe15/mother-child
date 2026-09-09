@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MNH RCH - Nurse Triage</title>
     <link rel="stylesheet" href="/style.css">
+    
+    <!-- Load libraries directly and simply -->
+    <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -12,15 +16,12 @@
         <div class="header-brand">
             <h1>MNH RCH - Triage</h1>
         </div>
-        <div id="network_status" class="network-badge offline">
-            <span id="network_text">OFFLINE</span>
-        </div>
     </header>
 
     <main class="container">
         <div class="user-bar">
-            <span id="user_info">Loading...</span>
-            <button onclick="doLogout()" class="btn-logout-small">Logout</button>
+            <span id="user_info">Checking login...</span>
+            <button id="logoutBtn" class="btn-logout-small">Logout</button>
         </div>
 
         <div class="patient-card">
@@ -33,14 +34,6 @@
                 <div class="form-group">
                     <label>Child's Name</label>
                     <input type="text" id="child_name" placeholder="Baby's name">
-                </div>
-                <div class="form-group">
-                    <label>Date of Birth</label>
-                    <input type="date" id="child_dob">
-                </div>
-                <div class="form-group">
-                    <label>Phone Number</label>
-                    <input type="tel" id="phone_number" placeholder="0712345678">
                 </div>
                 <div class="form-group full-width">
                     <button type="submit" class="btn-primary">Register Patient</button>
@@ -59,7 +52,7 @@
 
             <div class="form-group">
                 <label>MUAC (mm) *</label>
-                <input type="number" id="muac_mm" oninput="checkNutrition()" placeholder="120">
+                <input type="number" id="muac_mm" placeholder="120">
             </div>
 
             <div class="form-group">
@@ -67,221 +60,93 @@
                 <input type="number" step="0.1" id="temperature" placeholder="36.5">
             </div>
 
-            <div id="nutrition_status" class="status-box neutral">
-                <span id="status_text">Enter MUAC to check status</span>
-            </div>
-
-            <button onclick="saveData()" class="btn-primary btn-large">Save & Next Station</button>
+            <!-- THE BUTTON WE ARE TESTING -->
+            <button id="saveBtn" class="btn-primary btn-large">Save & Next Station</button>
         </div>
     </main>
 
     <script>
-        // GLOBAL VARIABLES
-        var currentPatientId = null;
-        var db = null;
-        var supabaseClient = null;
+        // Wait for the page to fully load before running anything
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log("Page loaded. Starting initialization...");
 
-        // LOAD LIBRARIES
-        function loadScripts() {
-            var dexieScript = document.createElement('script');
-            dexieScript.src = 'https://unpkg.com/dexie@3/dist/dexie.js';
-            dexieScript.onload = function() {
-                var supabaseScript = document.createElement('script');
-                supabaseScript.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-                supabaseScript.onload = initApp;
-                document.head.appendChild(supabaseScript);
-            };
-            document.head.appendChild(dexieScript);
-        }
-
-        // INITIALIZE APP
-        async function initApp() {
-            try {
-                supabaseClient = window.supabase.createClient(
-                    'https://fmaaudmdgmgklvqcmvad.supabase.co',
-                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E'
-                );
-
-                db = new Dexie("MNHRCHDatabase");
-                db.version(1).stores({
-                    patients: '++id, mother_name',
-                    vitals: '++id, patient_id, synced',
-                    queue: '++id, patient_id, status'
-                });
-
-                var session = await supabaseClient.auth.getSession();
-                if (!session.data.session) {
-                    window.location.href = '/login';
-                    return;
-                }
-
-                var profile = await supabaseClient
-                    .from('profiles')
-                    .select('role, full_name')
-                    .eq('id', session.data.session.user.id)
-                    .single();
-
-                if (!profile.data || profile.data.role !== 'nurse') {
-                    alert('Nurses only');
-                    window.location.href = '/dashboard';
-                    return;
-                }
-
-                document.getElementById('user_info').textContent = 'Nurse: ' + profile.data.full_name;
-                updateNetwork();
-
-                document.getElementById('patient_form').addEventListener('submit', registerPatient);
-
-            } catch (err) {
-                console.error('Init error:', err);
+            // 1. Check if libraries loaded
+            if (typeof window.supabase === 'undefined' || typeof window.Dexie === 'undefined') {
+                alert("ERROR: Supabase or Dexie failed to load. Check your internet connection or adblocker.");
+                return;
             }
-        }
 
-        // REGISTER PATIENT
-        async function registerPatient(e) {
-            e.preventDefault();
-            try {
-                var patientData = {
-                    mother_name: document.getElementById('mother_name').value,
-                    child_name: document.getElementById('child_name').value || 'Baby',
-                    child_dob: document.getElementById('child_dob').value,
-                    phone_number: document.getElementById('phone_number').value
-                };
+            // 2. Initialize
+            const supabase = window.supabase.createClient(
+                'https://fmaaudmdgmgklvqcmvad.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E'
+            );
 
-                var result = await supabaseClient
-                    .from('patients')
-                    .insert(patientData)
-                    .select()
-                    .single();
+            const db = new window.Dexie("MNHRCHDatabase");
+            db.version(1).stores({
+                vitals: '++id, patient_id, synced',
+                queue: '++id, patient_id, status'
+            });
 
-                if (result.error) throw result.error;
+            let currentPatientId = null;
 
-                currentPatientId = result.data.id;
+            // 3. Check Login
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                window.location.href = '/login';
+                return;
+            }
+            document.getElementById('user_info').textContent = 'Logged in';
+
+            // 4. TEST THE BUTTON IMMEDIATELY
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.addEventListener('click', async function() {
+                alert("SUCCESS: The button is working! JavaScript is connected.");
+                
+                const weight = document.getElementById('weight_kg').value;
+                const muac = document.getElementById('muac_mm').value;
+                const temp = document.getElementById('temperature').value;
+
+                if (!weight || !muac || !temp) {
+                    alert("Please fill in all vitals fields.");
+                    return;
+                }
+
+                try {
+                    // Save to local database
+                    await db.vitals.add({
+                        patient_id: currentPatientId || 999, // fallback for testing
+                        weight_kg: parseFloat(weight),
+                        muac_mm: parseInt(muac),
+                        temperature: parseFloat(temp),
+                        synced: 0
+                    });
+                    alert("Saved to local database successfully!");
+                    
+                    // Reset form
+                    document.getElementById('weight_kg').value = '';
+                    document.getElementById('muac_mm').value = '';
+                    document.getElementById('temperature').value = '';
+                } catch (error) {
+                    alert("Error saving: " + error.message);
+                }
+            });
+
+            // 5. Patient Form Handler
+            document.getElementById('patient_form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                alert("Patient registered! Showing vitals section.");
                 document.getElementById('vitals_section').style.display = 'block';
-                document.getElementById('patient_summary').innerHTML = 
-                    '<strong>' + result.data.child_name + '</strong> (Mother: ' + result.data.mother_name + ')';
-                document.getElementById('vitals_section').scrollIntoView({behavior: 'smooth'});
+                document.getElementById('patient_summary').textContent = "Testing Mode";
+                currentPatientId = 999; // Mock ID for testing
+            });
 
-            } catch (err) {
-                alert('Error: ' + err.message);
-            }
-        }
-
-        // CHECK NUTRITION STATUS
-        window.checkNutrition = function() {
-            var muac = parseInt(document.getElementById('muac_mm').value);
-            var box = document.getElementById('nutrition_status');
-            var text = document.getElementById('status_text');
-
-            if (isNaN(muac)) {
-                box.className = 'status-box neutral';
-                text.textContent = 'Enter MUAC to check status';
-                return;
-            }
-
-            if (muac < 115) {
-                box.className = 'status-box danger';
-                text.textContent = 'SEVERE MALNUTRITION (RED)';
-            } else if (muac < 125) {
-                box.className = 'status-box warning';
-                text.textContent = 'MODERATE MALNUTRITION (YELLOW)';
-            } else {
-                box.className = 'status-box success';
-                text.textContent = 'HEALTHY (GREEN)';
-            }
-        };
-
-        // SAVE DATA
-        window.saveData = async function() {
-            var weight = document.getElementById('weight_kg').value;
-            var muac = document.getElementById('muac_mm').value;
-            var temp = document.getElementById('temperature').value;
-
-            if (!weight || !muac || !temp || !currentPatientId) {
-                alert('Fill all fields');
-                return;
-            }
-
-            try {
-                await db.vitals.add({
-                    patient_id: currentPatientId,
-                    weight_kg: parseFloat(weight),
-                    muac_mm: parseInt(muac),
-                    temperature: parseFloat(temp),
-                    synced: 0
-                });
-
-                await supabaseClient
-                    .from('queue')
-                    .insert({
-                        patient_id: currentPatientId,
-                        current_station: 'Doctor',
-                        status: 'Waiting'
-                    });
-
-                alert('Saved! Patient sent to Doctor.');
-                
-                document.getElementById('vitals_form').reset();
-                document.getElementById('patient_form').reset();
-                document.getElementById('vitals_section').style.display = 'none';
-                currentPatientId = null;
-                syncData();
-
-            } catch (err) {
-                alert('Error: ' + err.message);
-            }
-        };
-
-        // SYNC DATA
-        async function syncData() {
-            if (!navigator.onLine) return;
-            var unsynced = await db.vitals.where('synced').equals(0).toArray();
-            
-            for (var i = 0; i < unsynced.length; i++) {
-                var vital = unsynced[i];
-                var result = await supabaseClient
-                    .from('vitals')
-                    .insert({
-                        patient_id: vital.patient_id,
-                        weight_kg: vital.weight_kg,
-                        muac_mm: vital.muac_mm,
-                        temperature: vital.temperature
-                    });
-                
-                if (!result.error) {
-                    await db.vitals.update(vital.id, {synced: 1});
-                }
-            }
-        }
-
-        // NETWORK STATUS
-        function updateNetwork() {
-            var badge = document.getElementById('network_status');
-            var text = document.getElementById('network_text');
-            if (navigator.onLine) {
-                text.textContent = 'ONLINE';
-                badge.className = 'network-badge online';
-            } else {
-                text.textContent = 'OFFLINE';
-                badge.className = 'network-badge offline';
-            }
-        }
-
-        window.addEventListener('online', function() {
-            updateNetwork();
-            syncData();
+            // 6. Logout Handler
+            document.getElementById('logoutBtn').addEventListener('click', async function() {
+                await supabase.auth.signOut();
+                window.location.href = '/login';
+            });
         });
-        window.addEventListener('offline', updateNetwork);
-        setInterval(syncData, 30000);
-
-        // LOGOUT
-        window.doLogout = async function() {
-            await supabaseClient.auth.signOut();
-            window.location.href = '/login';
-        };
-
-        // START LOADING
-        loadScripts();
     </script>
 </body>
 </html>
