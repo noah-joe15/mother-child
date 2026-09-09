@@ -1,31 +1,55 @@
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    let path = url.pathname;
+    const path = url.pathname;
 
-    // Default to login
-    if (path === '/') path = '/login.html';
-    
-    // Map routes to HTML files
-    const routes = {
-      '/login.html': 'login.html',
-      '/admin.html': 'admin.html',
-      '/admin': 'admin.html',
-      '/dashboard.html': 'dashboard.html',
-      '/dashboard': 'dashboard.html',
-      '/triage.html': 'triage.html',
-      '/triage': 'triage.html',
-    };
-
-    const fileName = routes[path] || 'login.html';
-
-    try {
-      const html = await env.__STATIC_CONTENT.get(fileName);
-      return new Response(html, {
-        headers: { 'Content-Type': 'text/html;charset=UTF-8' },
+    // Route mapping
+    if (path === '/' || path === '/login' || path === '/login.html') {
+      return new Response(await LOGIN_HTML, {
+        headers: { 'Content-Type': 'text/html' }
       });
-    } catch (e) {
-      return new Response('Not Found', { status: 404 });
     }
+    
+    if (path === '/admin' || path === '/admin.html') {
+      return new Response(await ADMIN_HTML, {
+        headers: { 'Content-Type': 'text/html' }
+      });
+    }
+    
+    if (path === '/dashboard' || path === '/dashboard.html') {
+      return new Response(await DASHBOARD_HTML, {
+        headers: { 'Content-Type': 'text/html' }
+      });
+    }
+    
+    if (path === '/triage' || path === '/triage.html') {
+      return new Response(await TRIAGE_HTML, {
+        headers: { 'Content-Type': 'text/html' }
+      });
+    }
+
+    // Serve CSS
+    if (path === '/style.css') {
+      return new Response(await STYLE_CSS, {
+        headers: { 'Content-Type': 'text/css' }
+      });
+    }
+
+    // Serve JS
+    if (path === '/script.js' || path === '/auth.js' || path === '/dashboard.js') {
+      const fileName = path.split('/').pop();
+      return new Response(await env[fileName.toUpperCase().replace('.JS', '_JS')], {
+        headers: { 'Content-Type': 'application/javascript' }
+      });
+    }
+
+    return new Response('Not Found', { status: 404 });
   },
 };
+
+// Import HTML files as text
+import LOGIN_HTML from './login.html?raw';
+import ADMIN_HTML from './admin.html?raw';
+import DASHBOARD_HTML from './dashboard.html?raw';
+import TRIAGE_HTML from './triage.html?raw';
+import STYLE_CSS from './style.css?raw';
