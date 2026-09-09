@@ -5,18 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MNH RCH - Nurse Triage</title>
     <link rel="stylesheet" href="/style.css">
-    <!-- Load libraries ONCE -->
-    <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-    <!-- Header -->
     <header class="app-header">
         <div class="header-brand">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-            </svg>
             <h1>MNH RCH - Triage</h1>
         </div>
         <div id="network_status" class="network-badge offline">
@@ -25,211 +18,191 @@
     </header>
 
     <main class="container">
-        <!-- User Info -->
         <div class="user-bar">
             <span id="user_info">Loading...</span>
-            <button onclick="handleLogout()" class="btn-logout-small">Logout</button>
+            <button onclick="doLogout()" class="btn-logout-small">Logout</button>
         </div>
 
-        <!-- Patient Registration Section -->
         <div class="patient-card">
             <h3>Patient Information</h3>
-            <form id="patient_form" class="form-grid">
+            <form id="patient_form">
                 <div class="form-group">
-                    <label for="mother_name">Mother's Name *</label>
+                    <label>Mother's Name *</label>
                     <input type="text" id="mother_name" required placeholder="Full name">
                 </div>
-
                 <div class="form-group">
-                    <label for="child_name">Child's Name</label>
+                    <label>Child's Name</label>
                     <input type="text" id="child_name" placeholder="Baby's name">
                 </div>
-
                 <div class="form-group">
-                    <label for="child_dob">Child's Date of Birth</label>
+                    <label>Date of Birth</label>
                     <input type="date" id="child_dob">
                 </div>
-
                 <div class="form-group">
-                    <label for="phone_number">Phone Number</label>
-                    <input type="tel" id="phone_number" placeholder="e.g., 0712345678">
+                    <label>Phone Number</label>
+                    <input type="tel" id="phone_number" placeholder="0712345678">
                 </div>
-
                 <div class="form-group full-width">
-                    <button type="submit" class="btn-primary">Register Patient & Continue</button>
+                    <button type="submit" class="btn-primary">Register Patient</button>
                 </div>
             </form>
         </div>
 
-        <!-- Vitals Section -->
         <div id="vitals_section" class="vitals-card" style="display: none;">
             <h3>Record Vitals</h3>
-            
             <div class="patient-summary" id="patient_summary"></div>
 
-            <form id="vitals_form">
-                <div class="form-group">
-                    <label for="weight_kg">Weight (kg) *</label>
-                    <input type="number" step="0.01" id="weight_kg" required placeholder="e.g., 7.5">
-                </div>
+            <div class="form-group">
+                <label>Weight (kg) *</label>
+                <input type="number" step="0.01" id="weight_kg" placeholder="7.5">
+            </div>
 
-                <div class="form-group">
-                    <label for="muac_mm">MUAC (mm) - Arm Circumference *</label>
-                    <input type="number" id="muac_mm" oninput="handleNutritionCheck()" required placeholder="e.g., 120">
-                </div>
+            <div class="form-group">
+                <label>MUAC (mm) *</label>
+                <input type="number" id="muac_mm" oninput="checkNutrition()" placeholder="120">
+            </div>
 
-                <div class="form-group">
-                    <label for="temperature">Temperature (°C) *</label>
-                    <input type="number" step="0.1" id="temperature" required placeholder="e.g., 36.5">
-                </div>
+            <div class="form-group">
+                <label>Temperature (°C) *</label>
+                <input type="number" step="0.1" id="temperature" placeholder="36.5">
+            </div>
 
-                <!-- Status Box -->
-                <div id="nutrition_status" class="status-box neutral">
-                    <span id="status_text">Enter MUAC to check nutritional status</span>
-                </div>
+            <div id="nutrition_status" class="status-box neutral">
+                <span id="status_text">Enter MUAC to check status</span>
+            </div>
 
-                <button type="button" onclick="handleSaveVitals()" class="btn-primary btn-large">
-                    Save & Send to Doctor's Queue
-                </button>
-            </form>
+            <button onclick="saveData()" class="btn-primary btn-large">Save & Next Station</button>
         </div>
     </main>
 
     <script>
-        // Global variables
-        let currentPatientId = null;
-        let db = null;
-        let supabaseClient = null;
+        // GLOBAL VARIABLES
+        var currentPatientId = null;
+        var db = null;
+        var supabaseClient = null;
 
-        // Initialize on page load
-        window.addEventListener('DOMContentLoaded', async function() {
-            await initTriage();
-        });
+        // LOAD LIBRARIES
+        function loadScripts() {
+            var dexieScript = document.createElement('script');
+            dexieScript.src = 'https://unpkg.com/dexie@3/dist/dexie.js';
+            dexieScript.onload = function() {
+                var supabaseScript = document.createElement('script');
+                supabaseScript.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+                supabaseScript.onload = initApp;
+                document.head.appendChild(supabaseScript);
+            };
+            document.head.appendChild(dexieScript);
+        }
 
-        // Initialize the app
-        async function initTriage() {
+        // INITIALIZE APP
+        async function initApp() {
             try {
-                // Setup Supabase
                 supabaseClient = window.supabase.createClient(
                     'https://fmaaudmdgmgklvqcmvad.supabase.co',
                     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E'
                 );
 
-                // Setup Dexie
                 db = new Dexie("MNHRCHDatabase");
                 db.version(1).stores({
-                    patients: '++id, mother_name, phone_number',
+                    patients: '++id, mother_name',
                     vitals: '++id, patient_id, synced',
                     queue: '++id, patient_id, status'
                 });
 
-                // Check auth
-                const { data: { session } } = await supabaseClient.auth.getSession();
-                
-                if (!session) {
+                var session = await supabaseClient.auth.getSession();
+                if (!session.data.session) {
                     window.location.href = '/login';
                     return;
                 }
 
-                const { data: profile } = await supabaseClient
+                var profile = await supabaseClient
                     .from('profiles')
                     .select('role, full_name')
-                    .eq('id', session.user.id)
+                    .eq('id', session.data.session.user.id)
                     .single();
 
-                if (!profile || profile.role !== 'nurse') {
-                    alert('Access denied. Nurses only.');
+                if (!profile.data || profile.data.role !== 'nurse') {
+                    alert('Nurses only');
                     window.location.href = '/dashboard';
                     return;
                 }
 
-                document.getElementById('user_info').textContent = `Nurse: ${profile.full_name}`;
-                updateNetworkStatus();
+                document.getElementById('user_info').textContent = 'Nurse: ' + profile.data.full_name;
+                updateNetwork();
 
-                // Setup form listener
-                document.getElementById('patient_form').addEventListener('submit', handlePatientRegister);
+                document.getElementById('patient_form').addEventListener('submit', registerPatient);
 
-            } catch (error) {
-                console.error('Init error:', error);
-                alert('Error initializing app: ' + error.message);
+            } catch (err) {
+                console.error('Init error:', err);
             }
         }
 
-        // Handle patient registration
-        async function handlePatientRegister(e) {
+        // REGISTER PATIENT
+        async function registerPatient(e) {
             e.preventDefault();
-
             try {
-                const patientData = {
+                var patientData = {
                     mother_name: document.getElementById('mother_name').value,
                     child_name: document.getElementById('child_name').value || 'Baby',
                     child_dob: document.getElementById('child_dob').value,
                     phone_number: document.getElementById('phone_number').value
                 };
 
-                const { data, error } = await supabaseClient
+                var result = await supabaseClient
                     .from('patients')
                     .insert(patientData)
                     .select()
                     .single();
 
-                if (error) throw error;
+                if (result.error) throw result.error;
 
-                currentPatientId = data.id;
-                
-                // Show vitals section
+                currentPatientId = result.data.id;
                 document.getElementById('vitals_section').style.display = 'block';
-                document.getElementById('patient_summary').innerHTML = `
-                    <div class="summary-badge">
-                        <strong>Patient:</strong> ${data.child_name} (Mother: ${data.mother_name})
-                    </div>
-                `;
+                document.getElementById('patient_summary').innerHTML = 
+                    '<strong>' + result.data.child_name + '</strong> (Mother: ' + result.data.mother_name + ')';
+                document.getElementById('vitals_section').scrollIntoView({behavior: 'smooth'});
 
-                document.getElementById('vitals_section').scrollIntoView({ behavior: 'smooth' });
-
-            } catch (error) {
-                alert('Error registering patient: ' + error.message);
+            } catch (err) {
+                alert('Error: ' + err.message);
             }
         }
 
-        // Check nutrition status on MUAC input
-        window.handleNutritionCheck = function() {
-            const muacInput = document.getElementById('muac_mm');
-            const statusBox = document.getElementById('nutrition_status');
-            const statusText = document.getElementById('status_text');
-            const muacValue = parseInt(muacInput.value);
+        // CHECK NUTRITION STATUS
+        window.checkNutrition = function() {
+            var muac = parseInt(document.getElementById('muac_mm').value);
+            var box = document.getElementById('nutrition_status');
+            var text = document.getElementById('status_text');
 
-            if (isNaN(muacValue)) {
-                statusBox.className = 'status-box neutral';
-                statusText.textContent = 'Enter MUAC to check nutritional status';
+            if (isNaN(muac)) {
+                box.className = 'status-box neutral';
+                text.textContent = 'Enter MUAC to check status';
                 return;
             }
 
-            if (muacValue < 115) {
-                statusBox.className = 'status-box danger';
-                statusText.textContent = 'SEVERE MALNUTRITION (RED) - Immediate Attention!';
-            } else if (muacValue >= 115 && muacValue < 125) {
-                statusBox.className = 'status-box warning';
-                statusText.textContent = 'MODERATE MALNUTRITION (YELLOW) - Monitor Closely';
+            if (muac < 115) {
+                box.className = 'status-box danger';
+                text.textContent = 'SEVERE MALNUTRITION (RED)';
+            } else if (muac < 125) {
+                box.className = 'status-box warning';
+                text.textContent = 'MODERATE MALNUTRITION (YELLOW)';
             } else {
-                statusBox.className = 'status-box success';
-                statusText.textContent = 'HEALTHY (GREEN) - Proceed to Vaccination';
+                box.className = 'status-box success';
+                text.textContent = 'HEALTHY (GREEN)';
             }
         };
 
-        // Save vitals
-        window.handleSaveVitals = async function() {
-            const weight = document.getElementById('weight_kg').value;
-            const muac = document.getElementById('muac_mm').value;
-            const temp = document.getElementById('temperature').value;
+        // SAVE DATA
+        window.saveData = async function() {
+            var weight = document.getElementById('weight_kg').value;
+            var muac = document.getElementById('muac_mm').value;
+            var temp = document.getElementById('temperature').value;
 
             if (!weight || !muac || !temp || !currentPatientId) {
-                alert('Please fill in all vitals fields.');
+                alert('Fill all fields');
                 return;
             }
 
             try {
-                // Save locally first
                 await db.vitals.add({
                     patient_id: currentPatientId,
                     weight_kg: parseFloat(weight),
@@ -238,8 +211,7 @@
                     synced: 0
                 });
 
-                // Add to queue
-                const { error: queueError } = await supabaseClient
+                await supabaseClient
                     .from('queue')
                     .insert({
                         patient_id: currentPatientId,
@@ -247,57 +219,45 @@
                         status: 'Waiting'
                     });
 
-                if (queueError) console.error('Queue error:', queueError);
-
-                alert('✓ Vitals saved! Patient added to Doctor\'s queue.');
-
-                // Reset form
+                alert('Saved! Patient sent to Doctor.');
+                
                 document.getElementById('vitals_form').reset();
                 document.getElementById('patient_form').reset();
                 document.getElementById('vitals_section').style.display = 'none';
-                document.getElementById('nutrition_status').className = 'status-box neutral';
-                document.getElementById('status_text').textContent = 'Enter MUAC to check nutritional status';
                 currentPatientId = null;
+                syncData();
 
-                // Sync to cloud
-                syncVitalsToCloud();
-
-            } catch (error) {
-                alert('Error saving vitals: ' + error.message);
+            } catch (err) {
+                alert('Error: ' + err.message);
             }
         };
 
-        // Sync engine
-        async function syncVitalsToCloud() {
+        // SYNC DATA
+        async function syncData() {
             if (!navigator.onLine) return;
-
-            try {
-                const unsyncedVitals = await db.vitals.where('synced').equals(0).toArray();
+            var unsynced = await db.vitals.where('synced').equals(0).toArray();
+            
+            for (var i = 0; i < unsynced.length; i++) {
+                var vital = unsynced[i];
+                var result = await supabaseClient
+                    .from('vitals')
+                    .insert({
+                        patient_id: vital.patient_id,
+                        weight_kg: vital.weight_kg,
+                        muac_mm: vital.muac_mm,
+                        temperature: vital.temperature
+                    });
                 
-                for (let vital of unsyncedVitals) {
-                    const { error } = await supabaseClient
-                        .from('vitals')
-                        .insert({
-                            patient_id: vital.patient_id,
-                            weight_kg: vital.weight_kg,
-                            muac_mm: vital.muac_mm,
-                            temperature: vital.temperature
-                        });
-
-                    if (!error) {
-                        await db.vitals.update(vital.id, { synced: 1 });
-                    }
+                if (!result.error) {
+                    await db.vitals.update(vital.id, {synced: 1});
                 }
-            } catch (error) {
-                console.error('Sync error:', error);
             }
         }
 
-        // Network status
-        function updateNetworkStatus() {
-            const badge = document.getElementById('network_status');
-            const text = document.getElementById('network_text');
-            
+        // NETWORK STATUS
+        function updateNetwork() {
+            var badge = document.getElementById('network_status');
+            var text = document.getElementById('network_text');
             if (navigator.onLine) {
                 text.textContent = 'ONLINE';
                 badge.className = 'network-badge online';
@@ -307,21 +267,21 @@
             }
         }
 
-        window.addEventListener('online', () => {
-            updateNetworkStatus();
-            syncVitalsToCloud();
+        window.addEventListener('online', function() {
+            updateNetwork();
+            syncData();
         });
-        
-        window.addEventListener('offline', updateNetworkStatus);
-        
-        setInterval(syncVitalsToCloud, 30000);
+        window.addEventListener('offline', updateNetwork);
+        setInterval(syncData, 30000);
 
-        // Logout
-        window.handleLogout = async function() {
+        // LOGOUT
+        window.doLogout = async function() {
             await supabaseClient.auth.signOut();
-            localStorage.clear();
             window.location.href = '/login';
         };
+
+        // START LOADING
+        loadScripts();
     </script>
 </body>
 </html>
