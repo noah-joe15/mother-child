@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MNH RCH - Staff Login</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="login-page">
+
+    <div class="login-container">
+        <div class="login-header">
+            <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            </svg>
+            <h1>MNH RCH System</h1>
+            <p>Staff Login Portal</p>
+        </div>
+
+        <form id="login_form" class="login-form">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" required placeholder="staff@mnh.go.tz">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required placeholder="Enter password">
+            </div>
+
+            <button type="submit" class="btn-primary">Sign In</button>
+            
+            <div id="login_error" class="error-message" style="display: none;"></div>
+        </form>
+
+        <div class="login-footer">
+            <p>Demo Accounts:</p>
+            <ul>
+                <li><strong>Nurse:</strong> nurse@mnh.go.tz / password123</li>
+                <li><strong>Doctor:</strong> doctor@mnh.go.tz / password123</li>
+                <li><strong>Pharmacist:</strong> pharmacist@mnh.go.tz / password123</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+</html>
