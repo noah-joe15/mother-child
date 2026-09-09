@@ -1,0 +1,224 @@
+/* Base Reset & Variables */
+:root {
+    --primary-blue: #0056b3;
+    --success-green: #28a745;
+    --warning-yellow: #ffc107;
+    --danger-red: #dc3545;
+    --bg-color: #f4f7f6;
+    --card-bg: #ffffff;
+    --text-main: #333333;
+    --text-muted: #666666;
+    --border-color: #e0e0e0;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    line-height: 1.5;
+}
+
+.icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* Header */
+.app-header {
+    background-color: var(--primary-blue);
+    color: white;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-brand h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+/* Network Badge */
+.network-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.network-badge.online {
+    background-color: var(--success-green);
+}
+
+.network-badge.offline {
+    background-color: var(--danger-red);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Main Container */
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+/* Cards */
+.patient-card, .vitals-card {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    margin-bottom: 1rem;
+}
+
+.patient-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-left: 5px solid var(--primary-blue);
+}
+
+.patient-icon {
+    background-color: #e6f0fa;
+    color: var(--primary-blue);
+    padding: 12px;
+    border-radius: 50%;
+    display: flex;
+}
+
+.patient-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.patient-info h2 {
+    font-size: 1.1rem;
+    margin-bottom: 2px;
+}
+
+.patient-info p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+/* Form Elements */
+.vitals-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-main);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    font-size: 1.1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1);
+}
+
+/* Status Box */
+.status-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    border: 2px solid transparent;
+}
+
+.status-box svg {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.status-box.neutral {
+    background-color: #f8f9fa;
+    color: var(--text-muted);
+    border-color: var(--border-color);
+}
+
+.status-box.danger {
+    background-color: #fff5f5;
+    color: var(--danger-red);
+    border-color: var(--danger-red);
+}
+
+.status-box.warning {
+    background-color: #fffbf0;
+    color: #856404;
+    border-color: var(--warning-yellow);
+}
+
+.status-box.success {
+    background-color: #f0fff4;
+    color: var(--success-green);
+    border-color: var(--success-green);
+}
+
+/* Button */
+.btn-primary {
+    width: 100%;
+    padding: 1rem;
+    background-color: var(--success-green);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+    background-color: #218838;
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
