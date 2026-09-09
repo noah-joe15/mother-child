@@ -1,53 +1,31 @@
-// ==========================================
-// CLOUDFLARE WORKER ROUTER
-// ==========================================
-
 export default {
-  async fetch(request, env, ctx) {
+  async fetch(request, env) {
     const url = new URL(request.url);
-    const path = url.pathname;
+    let path = url.pathname;
 
-    // Route definitions
+    // Default to login
+    if (path === '/') path = '/login.html';
+    
+    // Map routes to HTML files
     const routes = {
-      '/': 'login.html',
-      '/login': 'login.html',
+      '/login.html': 'login.html',
+      '/admin.html': 'admin.html',
       '/admin': 'admin.html',
+      '/dashboard.html': 'dashboard.html',
       '/dashboard': 'dashboard.html',
+      '/triage.html': 'triage.html',
       '/triage': 'triage.html',
     };
 
-    // Determine which file to serve
-    const fileName = routes[path] || routes['/'];
+    const fileName = routes[path] || 'login.html';
 
     try {
-      // Fetch the HTML file from your Worker's assets
-      const html = await getAsset(fileName);
-      
+      const html = await env.__STATIC_CONTENT.get(fileName);
       return new Response(html, {
-        headers: {
-          'Content-Type': 'text/html;charset=UTF-8',
-          'Cache-Control': 'no-cache'
-        },
+        headers: { 'Content-Type': 'text/html;charset=UTF-8' },
       });
-    } catch (error) {
-      return new Response(`File not found: ${fileName}`, { status: 404 });
+    } catch (e) {
+      return new Response('Not Found', { status: 404 });
     }
   },
 };
-
-// ==========================================
-// HELPER: Get HTML file content
-// ==========================================
-async function getAsset(fileName) {
-  // For Workers, you need to import the files
-  // This is a simplified version - see note below about Workers Sites
-  const files = {
-    'login.html': await import('./login.html?raw'),
-    'admin.html': await import('./admin.html?raw'),
-    'dashboard.html': await import('./dashboard.html?raw'),
-    'triage.html': await import('./triage.html?raw'),
-    'style.css': await import('./style.css?raw'),
-  };
-
-  return files[fileName]?.default || null;
-}
