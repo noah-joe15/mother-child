@@ -106,7 +106,7 @@ function calculateNutritionStatus() {
 // 4. SAVE TO OFFLINE DB
 // ==========================================
 async function saveVitalsOffline() {
-    const patientId = 1; // Hardcoded for pilot demo
+    const patientId = 1; // In real app, this would be from patient selection
     const weight = document.getElementById('weight_kg').value;
     const muac = document.getElementById('muac_mm').value;
     const temp = document.getElementById('temperature').value;
@@ -116,6 +116,7 @@ async function saveVitalsOffline() {
         return;
     }
 
+    // Save to local DB
     await db.vitals.add({
         patient_id: patientId,
         weight_kg: parseFloat(weight),
@@ -124,14 +125,23 @@ async function saveVitalsOffline() {
         synced: 0 
     });
 
-    alert("Vitals saved locally! (Works offline)");
+    // Add to queue for Doctor
+    const { error: queueError } = await supabase.from('queue').insert({
+        patient_id: patientId,
+        current_station: 'Doctor',
+        status: 'Waiting'
+    });
+
+    if (queueError) {
+        console.error('Queue error:', queueError);
+    }
+
+    alert("Vitals saved! Patient added to Doctor's queue.");
     syncVitalsToCloud(); 
     
-    // Clear form
     document.getElementById('vitals_form').reset();
-    calculateNutritionStatus(); // Reset status box
+    calculateNutritionStatus();
 }
-
 // ==========================================
 // 5. NETWORK STATUS INDICATOR
 // ==========================================
