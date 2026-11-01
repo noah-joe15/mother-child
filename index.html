@@ -3,87 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MNH RCH Pilot - Under 5 Triage</title>
-    <link rel="stylesheet" href="style.css">
-    
-    <!-- External Libraries -->
-    <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>MNH RCH — Official National E-Clinic Tracking Card</title>
+    <link rel="stylesheet" href="/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <!-- Header -->
-    <header class="app-header">
-        <div class="header-brand">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2v20M2 12h20"/>
-            </svg>
-            <h1>MNH RCH Triage</h1>
-        </div>
-        <div id="network_status" class="network-badge offline">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="1" y1="1" x2="23" y2="23"></line>
-                <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
-                <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
-                <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
-                <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
-                <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
-                <line x1="12" y1="20" x2="12.01" y2="20"></line>
-            </svg>
-            <span id="network_text">OFFLINE</span>
-        </div>
-    </header>
-
-    <main class="container">
-        <!-- Patient Context Card -->
-        <div class="patient-card">
-            <div class="patient-icon">
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <div class="container nav-inner">
+            <button class="lang-switcher" onclick="toggleLanguage()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
                 </svg>
+                <span id="lang-label">EN / SW</span>
+            </button>
+
+            <a href="/" class="logo">
+                <div class="logo-mark">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v20M2 12h20"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    MNH RCH
+                    <span>E-Clinic Portal</span>
+                </div>
+            </a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="container">
+            <div class="badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <span>Official National E-Clinic Tracking Card</span>
             </div>
-            <div class="patient-info">
-                <h2>Baby Neema</h2>
-                <p>Mother: Mama Sarah | Age: 8 Months</p>
+
+            <h1>Keep Mother and Child Safe, <span class="accent">for the Preservation of the Future</span></h1>
+
+            <p>A secure, digital continuation of Tanzania's trusted Kadi ya Kliniki. Every vaccination, every check-up, every milestone — preserved, protected, and accessible, even without an internet connection.</p>
+
+            <div class="hero-buttons">
+                <a href="/services" class="btn btn-primary">
+                    View Services
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </a>
+                <a href="/learn" class="btn btn-secondary">
+                    Learn More
+                </a>
             </div>
         </div>
+    </section>
 
-        <!-- Vitals Form -->
-        <form id="vitals_form" class="vitals-card">
-            <h3>Record Vitals</h3>
-            
-            <div class="form-group">
-                <label for="weight_kg">Weight (kg)</label>
-                <input type="number" step="0.01" id="weight_kg" placeholder="e.g., 7.5">
+    <!-- FEATURES -->
+    <section class="features">
+        <div class="container">
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                        </svg>
+                    </div>
+                    <h3>Offline</h3>
+                    <p>Works Without Internet</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                    </div>
+                    <h3>100%</h3>
+                    <p>Secure & Private Records</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                    <h3>24/7</h3>
+                    <p>Always Accessible</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 8l6 6"></path>
+                            <path d="M4 14l6-6 2-3"></path>
+                            <path d="M2 5h12"></path>
+                            <path d="M7 2h1"></path>
+                            <path d="M22 22l-5-10-5 10"></path>
+                            <path d="M14 18h6"></path>
+                        </svg>
+                    </div>
+                    <h3>EN / SW</h3>
+                    <p>Two Languages</p>
+                </div>
             </div>
+        </div>
+    </section>
 
-            <div class="form-group">
-                <label for="muac_mm">MUAC (mm) - Arm Circumference</label>
-                <input type="number" id="muac_mm" oninput="calculateNutritionStatus()" placeholder="e.g., 120">
+    <!-- REGISTER CTA -->
+    <section class="register-cta">
+        <div class="container">
+            <div class="cta-card">
+                <div class="cta-content">
+                    <h2>Register Your Family</h2>
+                    <p>Join the digital health movement. Create a secure account for mother and child to access all RCH services, track immunizations, and receive timely reminders — locally and nationally.</p>
+                </div>
+                <div class="cta-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </div>
             </div>
-
-            <div class="form-group">
-                <label for="temperature">Temperature (°C)</label>
-                <input type="number" step="0.1" id="temperature" placeholder="e.g., 36.5">
+            <div style="text-align: center; margin-top: 32px;">
+                <a href="/register" class="btn btn-primary">
+                    Register Now
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </a>
             </div>
+        </div>
+    </section>
 
-            <!-- Smart Status Box -->
-            <div id="nutrition_status" class="status-box neutral">
-                <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                </svg>
-                <span id="status_text">Enter MUAC to check nutritional status</span>
-            </div>
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <p>Built with pride in Tanzania · <strong>MNH RCH E-Clinic</strong> · Aligned with Dira ya Taifa 2050</p>
+        </div>
+    </footer>
 
-            <button type="button" onclick="saveVitalsOffline()" class="btn-primary">
-                Save & Next Station
-            </button>
-        </form>
-    </main>
-
-    <script src="script.js"></script>
+    <script>
+        function toggleLanguage() {
+            const label = document.getElementById('lang-label');
+            label.textContent = label.textContent === 'EN / SW' ? 'SW / EN' : 'EN / SW';
+        }
+    </script>
 </body>
 </html>
