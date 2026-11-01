@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nurse Dashboard - MNH RCH</title>
+    <link rel="stylesheet" href="/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <div class="container nav-inner">
+            <a href="/" class="logo">
+                <div class="logo-mark">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v20M2 12h20"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    MNH RCH
+                    <span>Nurse Portal</span>
+                </div>
+            </a>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div id="network_status" class="network-badge offline">
+                    <span id="network_text">OFFLINE</span>
+                </div>
+                <span id="user_info" style="font-size: 14px; font-weight: 600; color: var(--text-dark);">Loading...</span>
+                <button onclick="handleLogout()" class="btn-logout-small">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container" style="padding-top: 40px; padding-bottom: 80px;">
+        
+        <!-- ACCESS DENIED STATE -->
+        <div id="access_denied" style="display: none; text-align: center; padding: 60px 20px;">
+            <div style="width: 80px; height: 80px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; color: #ef4444;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 40px; height: 40px;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+            </div>
+            <h2 style="font-size: 24px; font-weight: 800; color: var(--text-dark); margin-bottom: 8px;">Access Restricted</h2>
+            <p style="color: var(--text-muted); margin-bottom: 24px;">You do not have the required nursing privileges to view this dashboard.</p>
+            <a href="/login" class="btn btn-primary" style="display: inline-flex; width: auto;">Return to Login</a>
+        </div>
+
+        <!-- DASHBOARD CONTENT -->
+        <div id="dashboard_content" style="display: none;">
+            
+            <!-- Welcome & Actions -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px; flex-wrap: wrap; gap: 20px;">
+                <div>
+                    <h1 style="font-size: 28px; font-weight: 800; color: var(--text-dark); margin-bottom: 8px;">Nurse Station Overview</h1>
+                    <p style="color: var(--text-muted);">Manage patient intake, record vitals, and monitor the clinic queue.</p>
+                </div>
+                <a href="/triage" class="btn btn-primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Register New Patient
+                </a>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="features-grid" style="margin-bottom: 40px;">
+                <div class="feature-card" style="text-align: left; display: flex; align-items: center; gap: 16px;">
+                    <div class="feature-icon" style="margin: 0; background: var(--blue-soft); color: var(--blue-accent);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="8.5" cy="7" r="4"></circle>
+                            <line x1="20" y1="8" x2="20" y2="14"></line>
+                            <line x1="23" y1="11" x2="17" y2="11"></line>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 id="stat_registered" style="font-size: 28px; margin-bottom: 0;">0</h3>
+                        <p style="text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: var(--text-light);">Registered Today</p>
+                    </div>
+                </div>
+
+                <div class="feature-card" style="text-align: left; display: flex; align-items: center; gap: 16px;">
+                    <div class="feature-icon" style="margin: 0; background: #fef3c7; color: #d97706;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 id="stat_awaiting" style="font-size: 28px; margin-bottom: 0;">0</h3>
+                        <p style="text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: var(--text-light);">Awaiting Doctor</p>
+                    </div>
+                </div>
+
+                <div class="feature-card" style="text-align: left; display: flex; align-items: center; gap: 16px;">
+                    <div class="feature-icon" style="margin: 0; background: #dcfce7; color: #16a34a;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 id="stat_completed" style="font-size: 28px; margin-bottom: 0;">0</h3>
+                        <p style="text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: var(--text-light);">Completed Today</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity List -->
+            <div class="patient-card">
+                <h3 style="margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px; color: var(--blue-accent);">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Recent Patient Activity
+                </h3>
+                <div id="recent_activity_list">
+                    <div style="text-align: center; padding: 40px; color: var(--text-light);">
+                        <p>Loading recent activity...</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const SUPABASE_URL = 'https://fmaaudmdgmgklvqcmvad.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function initNurseDashboard() {
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (!session) {
+                window.location.href = '/login';
+                return;
+            }
+
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('role, full_name')
+                .eq('id', session.user.id)
+                .single();
+
+            // Allow both nurses and admins to view this
+            if (error || (profile.role !== 'nurse' && profile.role !== 'admin')) {
+                document.getElementById('access_denied').style.display = 'block';
+                document.getElementById('dashboard_content').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('user_info').textContent = `Nurse: ${profile.full_name}`;
+            document.getElementById('dashboard_content').style.display = 'block';
+            
+            updateNetworkIndicator();
+            loadNurseStats();
+        }
+
+        async function loadNurseStats() {
+            const today = new Date().toISOString().split('T')[0];
+
+            // 1. Patients Registered Today
+            const { count: regCount } = await supabase
+                .from('patients')
+                .select('*', { count: 'exact', head: true })
+                .gte('created_at', `${today}T00:00:00`);
+            document.getElementById('stat_registered').textContent = regCount || 0;
+
+            // 2. Awaiting Doctor
+            const { count: awaitCount } = await supabase
+                .from('queue')
+                .select('*', { count: 'exact', head: true })
+                .eq('current_station', 'Doctor')
+                .eq('status', 'Waiting');
+            document.getElementById('stat_awaiting').textContent = awaitCount || 0;
+
+            // 3. Completed Today
+            const { count: compCount } = await supabase
+                .from('queue')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'Completed')
+                .gte('created_at', `${today}T00:00:00`);
+            document.getElementById('stat_completed').textContent = compCount || 0;
+
+            // 4. Recent Activity (Last 5 vitals recorded)
+            const { data: recentVitals, error: vitalsError } = await supabase
+                .from('vitals')
+                .select(`
+                    weight_kg,
+                    muac_mm,
+                    temperature,
+                    recorded_at,
+                    patients (mother_name, child_name)
+                `)
+                .order('recorded_at', { ascending: false })
+                .limit(5);
+
+            const listContainer = document.getElementById('recent_activity_list');
+            if (vitalsError || !recentVitals || recentVitals.length === 0) {
+                listContainer.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--text-light);">
+                        <p>No recent patient activity recorded yet.</p>
+                    </div>`;
+            } else {
+                listContainer.innerHTML = recentVitals.map(v => {
+                    const time = new Date(v.recorded_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const childName = v.patients?.child_name || 'Unknown Child';
+                    const motherName = v.patients?.mother_name || 'Unknown Mother';
+                    
+                    // Determine MUAC status color dynamically
+                    let statusColor = 'var(--text-muted)';
+                    let statusText = 'Normal';
+                    if (v.muac_mm < 115) { statusColor = '#ef4444'; statusText = 'Severe'; }
+                    else if (v.muac_mm < 125) { statusColor = '#d97706'; statusText = 'Moderate'; }
+                    else { statusColor = '#16a34a'; statusText = 'Healthy'; }
+
+                    return `
+                        <div class="queue-item" style="margin-bottom: 12px;">
+                            <div class="queue-info">
+                                <h4 style="font-size: 15px; font-weight: 700; color: var(--text-dark);">${childName}</h4>
+                                <p style="font-size: 13px; color: var(--text-muted);">Mother: ${motherName} • W: ${v.weight_kg}kg • Temp: ${v.temperature}°C</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="display: inline-block; padding: 4px 10px; border-radius: 100px; font-size: 11px; font-weight: 700; background: ${statusColor}15; color: ${statusColor}; border: 1px solid ${statusColor}30;">
+                                    MUAC: ${statusText}
+                                </span>
+                                <div style="font-size: 12px; color: var(--text-light); margin-top: 4px;">${time}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function updateNetworkIndicator() {
+            const badge = document.getElementById('network_status');
+            const text = document.getElementById('network_text');
+            if (navigator.onLine) {
+                text.textContent = 'ONLINE';
+                badge.className = 'network-badge online';
+            } else {
+                text.textContent = 'OFFLINE';
+                badge.className = 'network-badge offline';
+            }
+        }
+
+        window.addEventListener('online', updateNetworkIndicator);
+        window.addEventListener('offline', updateNetworkIndicator);
+
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            window.location.href = '/login';
+        }
+
+        // Initialize on load
+        initNurseDashboard();
+    </script>
+</body>
+</html>
