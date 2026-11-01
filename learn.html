@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn More — MNH RCH E-Clinic</title>
+    <link rel="stylesheet" href="/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container nav-inner">
+            <button class="lang-switcher" onclick="toggleLanguage()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+                <span id="lang-label">EN / SW</span>
+            </button>
+
+            <a href="/" class="logo">
+                <div class="logo-mark">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v20M2 12h20"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    MNH RCH
+                    <span>E-Clinic Portal</span>
+                </div>
+            </a>
+        </div>
+    </nav>
+
+    <section class="page-header">
+        <div class="container">
+            <a href="/" class="back-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                Back to Home
+            </a>
+            <h1>About the E-Clinic System</h1>
+            <p>Understanding how digital health is transforming maternal and child care across Tanzania.</p>
+        </div>
+    </section>
+
+    <section class="vision-section">
+        <div class="container">
+
+            <div class="vision-card">
+                <span class="vision-badge">Dira ya Taifa 2050</span>
+                <h2>Building a Healthier Tanzania, Together</h2>
+                <p>The MNH RCH E-Clinic is directly aligned with Tanzania's Development Vision 2050 — a roadmap to transform our nation into a middle-income country with a high quality of life. At the heart of this vision is human capital development, and no investment is more fundamental than the health of our mothers and children. By digitizing the trusted Kadi ya Kliniki, we are ensuring that every child, in every corner of Tanzania, has a documented, protected health journey from birth to five years and beyond.</p>
+            </div>
+
+            <div class="detail-grid">
+
+                <div class="detail-card">
+                    <h3>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        Secure by Design
+                    </h3>
+                    <p>Every record is protected with role-based access. Mothers, nurses, doctors, and pharmacists see only what is relevant to their role. Data is encrypted and stored securely in compliance with national health data standards.</p>
+                </div>
+
+                <div class="detail-card">
+                    <h3>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                        </svg>
+                        Offline-First Technology
+                    </h3>
+                    <p>Recognizing that internet connectivity is not guaranteed in every dispensary, our system works fully offline. Data syncs automatically when connectivity returns — ensuring no mother is ever turned away.</p>
+                </div>
+
+                <div class="detail-card">
+                    <h3>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        Real-Time Tracking
+                    </h3>
+                    <p>Health facilities can monitor stock levels of vaccines and essential medicines in real time. Automated reminders ensure no child misses a critical immunization window.</p>
+                </div>
+
+                <div class="detail-card">
+                    <h3>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        Community Empowerment
+                    </h3>
+                    <p>Mothers receive SMS reminders for upcoming appointments. Community Health Workers can access records to conduct informed home visits, strengthening the bridge between facility and family.</p>
+                </div>
+
+                <div class="detail-card">
+                    <h3>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                        Interoperable with GoTHoMIS
+                    </h3>
+                    <p>Built as a complementary microservice, our system pushes data seamlessly into the national GoTHoMIS and DHIS2 ecosystems — no double data entry, no fragmented records.</p>
+                </div>
+
+                <div class="detail-card">
+                    <h3>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 8l6 6"></path>
+                            <path d="M4 14l6-6 2-3"></path>
+                            <path d="M2 5h12"></path>
+                            <path d="M7 2h1"></path>
+                            <path d="M22 22l-5-10-5 10"></path>
+                            <path d="M14 18h6"></path>
+                        </svg>
+                        Bilingual Access
+                    </h3>
+                    <p>Fully available in both English and Swahili, ensuring that every healthcare worker and every mother can navigate the system with confidence and clarity.</p>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>Built with pride in Tanzania · <strong>MNH RCH E-Clinic</strong> · Aligned with Dira ya Taifa 2050</p>
+        </div>
+    </footer>
+
+    <script>
+        function toggleLanguage() {
+            const label = document.getElementById('lang-label');
+            label.textContent = label.textContent === 'EN / SW' ? 'SW / EN' : 'EN / SW';
+        }
+    </script>
+</body>
+</html>
