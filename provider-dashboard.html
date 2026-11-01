@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provider Dashboard - MNH RCH</title>
+    <link rel="stylesheet" href="/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <div class="container nav-inner">
+            <a href="/" class="logo">
+                <div class="logo-mark">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v20M2 12h20"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    MNH RCH
+                    <span>Provider Portal</span>
+                </div>
+            </a>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <span id="user_info" style="font-size: 14px; font-weight: 600; color: var(--text-dark);">Loading...</span>
+                <button onclick="handleLogout()" class="btn-logout-small">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container" style="padding-top: 40px; padding-bottom: 80px;">
+        
+        <!-- Header & Stats -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px; flex-wrap: wrap; gap: 20px;">
+            <div>
+                <h1 id="station_title" style="font-size: 28px; font-weight: 800; color: var(--text-dark); margin-bottom: 8px;">Queue</h1>
+                <p style="color: var(--text-muted);">Manage patient flow and update care statuses in real-time.</p>
+            </div>
+            
+            <div style="display: flex; gap: 16px;">
+                <div class="feature-card" style="text-align: center; padding: 16px 24px; min-width: 120px;">
+                    <h3 id="waiting_count" style="font-size: 24px; margin-bottom: 4px; color: #d97706;">0</h3>
+                    <p style="text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: var(--text-light);">Waiting</p>
+                </div>
+                <div class="feature-card" style="text-align: center; padding: 16px 24px; min-width: 120px;">
+                    <h3 id="progress_count" style="font-size: 24px; margin-bottom: 4px; color: #2563eb;">0</h3>
+                    <p style="text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: var(--text-light);">In Progress</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Queue List -->
+        <div class="patient-card">
+            <h3 style="margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px; color: var(--blue-accent);">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                Active Patient Queue
+            </h3>
+            <div id="queue_list">
+                <!-- Queue items will be injected here by dashboard.js -->
+           6</div>
+        </div>
+
+    </main>
+
+    <!-- Load the Provider Engine -->
+    <script src="/dashboard.js"></script>
+</body>
+</html>
