@@ -626,33 +626,32 @@
         }
 
         async function updateStatus(queueId, newStatus, nextStation = null) {
-            try {
-                console.log('[Doctor] Updating status:', queueId, newStatus, nextStation);
-                
-                const updateData = { 
-                    status: newStatus, 
-                    updated_at: new Date().toISOString()
-                };
-                
-                if (nextStation) {
-                    updateData.current_station = nextStation;
-                }
-
-                const { error } = await supabaseClient
-                    .from('queue')
-                    .update(updateData)
-                    .eq('id', queueId);
-
-                if (error) throw error;
-
-                console.log('[Doctor] Status updated successfully');
-                await loadQueue();
-
-            } catch (error) {
-                console.error('[Doctor] Update error:', error);
-                alert('Failed to update patient status: ' + error.message);
-            }
+    try {
+        console.log('[Doctor] Updating status:', queueId, newStatus, nextStation);
+        
+        const updateData = { 
+            status: newStatus
+        };
+        
+        if (nextStation) {
+            updateData.current_station = nextStation;
         }
+
+        const { error } = await supabaseClient
+            .from('queue')
+            .update(updateData)
+            .eq('id', queueId);
+
+        if (error) throw error;
+
+        console.log('[Doctor] Status updated successfully');
+        await loadQueue();
+
+    } catch (error) {
+        console.error('[Doctor] Update error:', error);
+        alert('Failed to update patient status: ' + error.message);
+    }
+}
 
         async function handleLogout() {
             console.log('[Doctor] Logout initiated');
