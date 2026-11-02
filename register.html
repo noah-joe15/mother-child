@@ -298,8 +298,8 @@
         </div>
     </footer>
 
-    <script>
-        // Initialize Supabase Client (Use supabaseClient instead of supabase to avoid conflict)
+            <script>
+        // Initialize Supabase Client
         const SUPABASE_URL = 'https://fmaaudmdgmgklvqcmvad.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -313,7 +313,7 @@
             btn.disabled = true;
 
             try {
-                // Simply insert into patients table - NO auth signup to avoid 500 errors
+                // Insert into patients table - birth_weight is NOT included (it's recorded in vitals table by nurse)
                 const { data, error } = await supabaseClient
                     .from('patients')
                     .insert({
@@ -325,14 +325,13 @@
                         child_name: document.getElementById('child_name').value || null,
                         child_dob: document.getElementById('child_dob').value || null,
                         child_sex: document.getElementById('child_sex').value || null,
-                        birth_weight: document.getElementById('birth_weight').value || null,
                         created_at: new Date().toISOString()
                     })
                     .select();
 
                 if (error) throw error;
 
-                btn.innerHTML = '✓ Registered Successfully!';
+                btn.innerHTML = 'Registered Successfully!';
                 btn.style.background = '#16a34a';
                 
                 // Store phone number in localStorage for dashboard to use
