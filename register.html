@@ -299,7 +299,6 @@
     </footer>
 
             <script>
-        // Initialize Supabase Client
         const SUPABASE_URL = 'https://fmaaudmdgmgklvqcmvad.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -313,28 +312,41 @@
             btn.disabled = true;
 
             try {
-                // Insert into patients table - birth_weight is NOT included (it's recorded in vitals table by nurse)
+                // Safely parse values, ensuring empty strings become null
+                const motherAgeVal = document.getElementById('mother_age').value;
+                const childDobVal = document.getElementById('child_dob').value;
+                const childNameVal = document.getElementById('child_name').value.trim();
+                const childSexVal = document.getElementById('child_sex').value;
+
+                const payload = {
+                    mother_name: document.getElementById('mother_name').value,
+                    phone_number: document.getElementById('phone_number').value,
+                    mother_age: motherAgeVal ? parseInt(motherAgeVal, 10) : null,
+                    sha_number: document.getElementById('sha_number').value.trim() || null,
+                    residence: document.getElementById('residence').value.trim() || null,
+                    child_name: childNameVal === '' ? null : childNameVal,
+                    child_dob: childDobVal === '' ? null : childDobVal,
+                    child_sex: childSexVal === '' ? null : childSexVal,
+                    created_at: new Date().toISOString()
+                };
+
+                console.log('[Register] Attempting to insert payload:', payload);
+
                 const { data, error } = await supabaseClient
                     .from('patients')
-                    .insert({
-                        mother_name: document.getElementById('mother_name').value,
-                        mother_age: document.getElementById('mother_age').value || null,
-                        phone_number: document.getElementById('phone_number').value,
-                        sha_number: document.getElementById('sha_number').value || null,
-                        residence: document.getElementById('residence').value || null,
-                        child_name: document.getElementById('child_name').value || null,
-                        child_dob: document.getElementById('child_dob').value || null,
-                        child_sex: document.getElementById('child_sex').value || null,
-                        created_at: new Date().toISOString()
-                    })
+                    .insert(payload)
                     .select();
 
-                if (error) throw error;
+                if (error) {
+                    console.error('[Register] Supabase Error Object:', JSON.stringify(error, null, 2));
+                    throw error;
+                }
+
+                console.log('[Register] Success:', data);
 
                 btn.innerHTML = 'Registered Successfully!';
                 btn.style.background = '#16a34a';
                 
-                // Store phone number in localStorage for dashboard to use
                 localStorage.setItem('mnh_user_phone', document.getElementById('phone_number').value);
                 localStorage.setItem('mnh_user_name', document.getElementById('mother_name').value);
                 
@@ -344,8 +356,10 @@
                 }, 1000);
 
             } catch (error) {
-                console.error('Registration error:', error);
-                alert('Failed to register: ' + error.message);
+                console.error('[Register] Registration failed:', error);
+                // Show the exact database error to help us debug
+                const errorMsg = error.details || error.message || 'Unknown database error';
+                alert('Failed to register: ' + errorMsg + '\n\n(Please check the browser console for full details)');
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
