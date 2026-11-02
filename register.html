@@ -299,10 +299,10 @@
     </footer>
 
     <script>
-        // Initialize Supabase ONCE (Fixed duplicate declaration error)
+        // Initialize Supabase Client (Renamed to avoid conflict with global window.supabase)
         const SUPABASE_URL = 'https://fmaaudmdgmgklvqcmvad.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         document.getElementById('registration_form').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -332,7 +332,7 @@
                 
                 console.log('[Register] Creating auth account for:', authEmail);
                 
-                const { data: authData, error: authError } = await supabase.auth.signUp({
+                const { data: authData, error: authError } = await supabaseClient.auth.signUp({
                     email: authEmail,
                     password: defaultPassword,
                     options: {
@@ -368,7 +368,7 @@
                     created_at: new Date().toISOString()
                 };
 
-                const { data: patient, error: patientError } = await supabase
+                const { data: patient, error: patientError } = await supabaseClient
                     .from('patients')
                     .insert(patientData)
                     .select()
@@ -376,8 +376,6 @@
 
                 if (patientError) {
                     console.error('[Register] Patient save error:', patientError);
-                    // If patient save fails, we should delete the auth user
-                    await supabase.auth.admin.deleteUser(authData.user.id);
                     throw patientError;
                 }
 
@@ -385,7 +383,7 @@
 
                 // STEP 3: Auto-login the mother
                 console.log('[Register] Auto-logging in...');
-                const { error: signInError } = await supabase.auth.signInWithPassword({
+                const { error: signInError } = await supabaseClient.auth.signInWithPassword({
                     email: authEmail,
                     password: defaultPassword
                 });
