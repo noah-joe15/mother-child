@@ -28,10 +28,10 @@ function calculateAge(dobString) {
     months += today.getMonth();
     
     if (months < 1) return 'Newborn';
-    if (months < 12) return `${months} month${months > 1 ? 's' : ''}`;
+    if (months < 12) return months + ' month' + (months > 1 ? 's' : '');
     const years = Math.floor(months / 12);
     const remainingMonths = months % 12;
-    return remainingMonths > 0 ? `${years} year${years > 1 ? 's' : ''}, ${remainingMonths} mo` : `${years} year${years > 1 ? 's' : ''}`;
+    return remainingMonths > 0 ? years + ' year' + (years > 1 ? 's' : '') + ', ' + remainingMonths + ' mo' : years + ' year' + (years > 1 ? 's' : '');
 }
 
 // Evaluate MUAC status
@@ -57,24 +57,7 @@ function showModal(title, contentHTML) {
     const existingModal = document.getElementById('dynamic_modal');
     if (existingModal) existingModal.remove();
 
-    const modalHTML = `
-        <div id="dynamic_modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px;">
-            <div style="background: white; border-radius: 16px; width: 100%; max-width: 500px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); animation: slideUp 0.3s ease-out;">
-                <div style="padding: 20px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-                    <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: #0f172a;">${title}</h3>
-                    <button onclick="closeModal()" style="background: none; border: none; cursor: pointer; color: #64748b; padding: 4px;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    </button>
-                </div>
-                <div style="padding: 24px; color: #334155; line-height: 1.6;">
-                    ${contentHTML}
-                </div>
-                <div style="padding: 16px 24px; border-top: 1px solid #e2e8f0; text-align: right;">
-                    <button onclick="closeModal()" style="background: #1e3a8a; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;">Close</button>
-                </div>
-            </div>
-        </div>
-    `;
+    const modalHTML = '<div id="dynamic_modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px;"><div style="background: white; border-radius: 16px; width: 100%; max-width: 500px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); animation: slideUp 0.3s ease-out;"><div style="padding: 20px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;"><h3 style="margin: 0; font-size: 18px; font-weight: 700; color: #0f172a;">' + title + '</h3><button onclick="closeModal()" style="background: none; border: none; cursor: pointer; color: #64748b; padding: 4px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div style="padding: 24px; color: #334155; line-height: 1.6;">' + contentHTML + '</div><div style="padding: 16px 24px; border-top: 1px solid #e2e8f0; text-align: right;"><button onclick="closeModal()" style="background: #1e3a8a; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;">Close</button></div></div></div>';
     
     // Add animation style if not present
     if (!document.getElementById('modal-anim-style')) {
@@ -134,7 +117,7 @@ async function loadMotherDashboard() {
         
         const age = calculateAge(patient.child_dob);
         const dobFormatted = patient.child_dob ? formatDate(patient.child_dob) : 'Not recorded';
-        document.getElementById('child_dob').textContent = patient.child_dob ? `${dobFormatted} (${age})` : 'Not recorded';
+        document.getElementById('child_dob').textContent = patient.child_dob ? dobFormatted + ' (' + age + ')' : 'Not recorded';
         
         document.getElementById('child_sex').textContent = patient.child_sex || 'Not recorded';
 
@@ -150,16 +133,10 @@ async function loadMotherDashboard() {
             const latestVital = vitals[0];
             const muacEval = evaluateMUAC(latestVital.muac_mm);
             
-            document.getElementById('nutrition_status').className = `status-badge ${muacEval.class}`;
-            document.getElementById('nutrition_status').innerHTML = `
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 12px; height: 12px;">${muacEval.icon}</svg>
-                ${muacEval.status}
-            `;
+            document.getElementById('nutrition_status').className = 'status-badge ' + muacEval.class;
+            document.getElementById('nutrition_status').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 12px; height: 12px;">' + muacEval.icon + '</svg>' + muacEval.status;
         } else {
-            document.getElementById('nutrition_status').innerHTML = `
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 12px; height: 12px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                Pending Assessment
-            `;
+            document.getElementById('nutrition_status').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 12px; height: 12px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Pending Assessment';
         }
 
         // 4. Fetch Visit History for Activity List
@@ -194,27 +171,15 @@ function renderActivityList(visits) {
         const month = date.toLocaleDateString('en-GB', { month: 'short' }).toUpperCase();
         
         let title = 'Clinic Visit';
-        let details = `Station: ${visit.current_station || 'General'} | Status: ${visit.status}`;
+        let details = 'Station: ' + (visit.current_station || 'General') + ' | Status: ' + visit.status;
         let vitalsHTML = '';
 
         if (visit.diagnosis) {
             title = 'Consultation';
-            details = `Diagnosis: ${visit.diagnosis}`;
+            details = 'Diagnosis: ' + visit.diagnosis;
         }
 
-        return `
-            <div class="activity-item">
-                <div class="activity-date">
-                    <div class="activity-day">${day}</div>
-                    <div class="activity-month">${month}</div>
-                </div>
-                <div class="activity-details" style="flex: 1;">
-                    <h4>${title}</h4>
-                    <p>${details}</p>
-                    ${vitalsHTML}
-                </div>
-            </div>
-        `;
+        return '<div class="activity-item"><div class="activity-date"><div class="activity-day">' + day + '</div><div class="activity-month">' + month + '</div></div><div class="activity-details" style="flex: 1;"><h4>' + title + '</h4><p>' + details + '</p>' + vitalsHTML + '</div></div>';
     }).join('');
 }
 
@@ -222,64 +187,19 @@ function renderActivityList(visits) {
 // 6. QUICK ACTION HANDLERS
 // ==========================================
 window.viewImmunizationCard = function() {
-    showModal('Immunization Card', `
-        <p><strong>Child's Immunization Status:</strong> On Track</p>
-        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 16px 0;">
-        <ul style="list-style: none; padding: 0; margin: 0;">
-            <li style="padding: 8px 0; display: flex; justify-content: space-between;">
-                <span>BCG (At Birth)</span>
-                <span style="color: #16a34a; font-weight: 600;">✓ Completed</span>
-            </li>
-            <li style="padding: 8px 0; display: flex; justify-content: space-between;">
-                <span>OPV 0 (At Birth)</span>
-                <span style="color: #16a34a; font-weight: 600;">✓ Completed</span>
-            </li>
-            <li style="padding: 8px 0; display: flex; justify-content: space-between;">
-                <span>Pentavalent 1 (6 weeks)</span>
-                <span style="color: #d97706; font-weight: 600;">⏳ Due Soon</span>
-            </li>
-        </ul>
-        <p style="margin-top: 16px; font-size: 13px; color: #64748b;">* This is a digital representation of the Kadi ya Kliniki.</p>
-    `);
+    showModal('Immunization Card', '<p><strong>Child Immunization Status:</strong> On Track</p><hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 16px 0;"><ul style="list-style: none; padding: 0; margin: 0;"><li style="padding: 8px 0; display: flex; justify-content: space-between;"><span>BCG (At Birth)</span><span style="color: #16a34a; font-weight: 600;">Completed</span></li><li style="padding: 8px 0; display: flex; justify-content: space-between;"><span>OPV 0 (At Birth)</span><span style="color: #16a34a; font-weight: 600;">Completed</span></li><li style="padding: 8px 0; display: flex; justify-content: space-between;"><span>Pentavalent 1 (6 weeks)</span><span style="color: #d97706; font-weight: 600;">Due Soon</span></li></ul><p style="margin-top: 16px; font-size: 13px; color: #64748b;">* This is a digital representation of the Kadi ya Kliniki.</p>');
 };
 
 window.viewAppointments = function() {
-    showModal('Upcoming Appointments', `
-        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
-            <div style="font-weight: 700; color: #1e3a8a; margin-bottom: 4px;">Next Vaccination Visit</div>
-            <div style="font-size: 14px;">Date: 15 Nov 2026</div>
-            <div style="font-size: 14px;">Purpose: Pentavalent 1 & OPV 1</div>
-        </div>
-        <p style="font-size: 13px; color: #64748b;">You will receive an SMS reminder 2 days before this appointment.</p>
-    `);
+    showModal('Upcoming Appointments', '<div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px; margin-bottom: 12px;"><div style="font-weight: 700; color: #1e3a8a; margin-bottom: 4px;">Next Vaccination Visit</div><div style="font-size: 14px;">Date: 15 Nov 2026</div><div style="font-size: 14px;">Purpose: Pentavalent 1 & OPV 1</div></div><p style="font-size: 13px; color: #64748b;">You will receive an SMS reminder 2 days before this appointment.</p>');
 };
 
 window.viewGrowthChart = function() {
-    showModal('Growth Monitoring', `
-        <p><strong>Latest Measurement:</strong></p>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0;">
-            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; text-align: center;">
-                <div style="font-size: 12px; color: #64748b;">Weight</div>
-                <div style="font-size: 18px; font-weight: 700; color: #0f172a;">5.2 kg</div>
-            </div>
-            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; text-align: center;">
-                <div style="font-size: 12px; color: #64748b;">MUAC</div>
-                <div style="font-size: 18px; font-weight: 700; color: #16a34a;">130 mm</div>
-            </div>
-        </div>
-        <p style="font-size: 13px; color: #64748b;">Growth is tracking along the healthy WHO percentile curve.</p>
-    `);
+    showModal('Growth Monitoring', '<p><strong>Latest Measurement:</strong></p><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0;"><div style="background: #f8fafc; padding: 12px; border-radius: 8px; text-align: center;"><div style="font-size: 12px; color: #64748b;">Weight</div><div style="font-size: 18px; font-weight: 700; color: #0f172a;">5.2 kg</div></div><div style="background: #f8fafc; padding: 12px; border-radius: 8px; text-align: center;"><div style="font-size: 12px; color: #64748b;">MUAC</div><div style="font-size: 18px; font-weight: 700; color: #16a34a;">130 mm</div></div></div><p style="font-size: 13px; color: #64748b;">Growth is tracking along the healthy WHO percentile curve.</p>');
 };
 
 window.viewVisitHistory = function() {
-    showModal('Full Visit History', `
-        <p>Your complete clinical history is securely stored. Below is a summary:</p>
-        <ul style="padding-left: 20px; margin-top: 12px;">
-            <li style="margin-bottom: 8px;"><strong>02 Nov 2026:</strong> Initial Registration & Vitals (Nurse Juma)</li>
-            <li style="margin-bottom: 8px;"><strong>15 Oct 2026:</strong> Antenatal Checkup - Week 32 (Dr. Amina)</li>
-        </ul>
-        <button style="margin-top: 16px; width: 100%; padding: 10px; background: #1e3a8a; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Download Full PDF Report</button>
-    `);
+    showModal('Full Visit History', '<p>Your complete clinical history is securely stored. Below is a summary:</p><ul style="padding-left: 20px; margin-top: 12px;"><li style="margin-bottom: 8px;"><strong>02 Nov 2026:</strong> Initial Registration & Vitals (Nurse Juma)</li><li style="margin-bottom: 8px;"><strong>15 Oct 2026:</strong> Antenatal Checkup - Week 32 (Dr. Amina)</li></ul><button style="margin-top: 16px; width: 100%; padding: 10px; background: #1e3a8a; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Download Full PDF Report</button>');
 };
 
 window.updateMyInfo = function() {
@@ -305,6 +225,6 @@ window.handleLogout = async function() {
 // ==========================================
 // 7. INITIALIZATION
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
     loadMotherDashboard();
 });
