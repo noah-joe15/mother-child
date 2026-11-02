@@ -1,6 +1,7 @@
 /**
  * MNH RCH E-Clinic - Authentication Engine
  * Handles login, role-based routing, and session management.
+ * Updated for unified Nurse and Doctor portals.
  */
 
 // ==========================================
@@ -60,19 +61,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('mnh_user_role', profile.role);
                 localStorage.setItem('mnh_user_name', profile.full_name);
 
-                // 4. Role-Based Routing to the new premium pages
+                // 4. Role-Based Routing to the unified pages
                 switch (profile.role) {
                     case 'nurse':
-                        window.location.href = '/nurse-dashboard';
+                        window.location.href = 'nurse.html';
                         break;
                     case 'doctor':
                     case 'pharmacist':
                     case 'admin':
-                        window.location.href = '/provider-dashboard';
+                        window.location.href = 'doctor.html';
                         break;
                     default:
                         // Fallback for unrecognized roles
-                        window.location.href = '/login';
+                        window.location.href = 'login.html';
                         break;
                 }
 
@@ -104,14 +105,14 @@ async function checkAuth() {
         
         if (!session) {
             // No active session, redirect to login
-            window.location.href = '/login';
+            window.location.href = 'login.html';
             return null;
         }
         
         return session.user;
     } catch (error) {
         console.error('[Auth] Session check failed:', error);
-        window.location.href = '/login';
+        window.location.href = 'login.html';
         return null;
     }
 }
@@ -124,13 +125,13 @@ window.handleLogout = async function() {
         await supabase.auth.signOut();
         localStorage.removeItem('mnh_user_role');
         localStorage.removeItem('mnh_user_name');
-        window.location.href = '/login';
+        window.location.href = 'login.html';
     } catch (error) {
         console.error('[Auth] Logout failed:', error);
-        // Force redirect anyway
-        window.location.href = '/login';
+        // Force redirect anyway to clear state
+        window.location.href = 'login.html';
     }
 };
 
-// Also keep the old name for backward compatibility if any HTML still uses it
+// Keep the old name for backward compatibility if any HTML still uses it
 window.logout = window.handleLogout;
