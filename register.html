@@ -299,7 +299,7 @@
     </footer>
 
     <script>
-        // Initialize Supabase Client (Renamed to avoid conflict with global window.supabase)
+        // Initialize Supabase Client (Renamed to supabaseClient to avoid conflict with global window.supabase)
         const SUPABASE_URL = 'https://fmaaudmdgmgklvqcmvad.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -395,9 +395,9 @@
                 btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 18px; height: 18px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Account Created Successfully!';
                 btn.style.background = '#16a34a';
                 
-                // Show login credentials alert
+                // Show login credentials alert (No emojis, strictly text)
                 setTimeout(() => {
-                    alert(`✓ Account Created Successfully!\n\nYour Login Details:\n📱 Phone: ${phoneNumber}\n🔑 Password: ${phoneNumber}\n\nYou can use these to login anytime.\n\nRedirecting to your dashboard...`);
+                    alert(`Account Created Successfully!\n\nYour Login Details:\nPhone: ${phoneNumber}\nPassword: ${phoneNumber}\n\nYou can use these to login anytime.\n\nRedirecting to your dashboard...`);
                     window.location.href = 'mother-dashboard.html';
                 }, 1000);
 
