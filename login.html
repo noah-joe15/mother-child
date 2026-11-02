@@ -4,12 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Staff Login - MNH RCH E-Clinic</title>
-    <link rel="stylesheet" href="/style.css?v=4">
+    
+    <!-- Cache-busted to force fresh download -->
+    <link rel="stylesheet" href="/style.css?v=5">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Load Supabase FIRST, then our auth engine -->
+    <!-- Load Supabase Library ONCE -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/auth.js?v=4"></script>
+    
+    <!-- Load Auth Engine (Cache-busted) -->
+    <script src="/auth.js?v=5"></script>
 
     <style>
         /* Login-specific styles to ensure perfect rendering */
@@ -102,6 +106,7 @@
             outline: none;
             transition: all 0.2s;
             font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
         }
 
         .login-form-card input:focus {
@@ -200,7 +205,7 @@
     <!-- Simplified Navigation for Login -->
     <nav class="navbar">
         <div class="container nav-inner" style="justify-content: center;">
-            <a href="/" class="logo">
+            <a href="index.html" class="logo">
                 <div class="logo-mark">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M12 2v20M2 12h20"/>
@@ -247,13 +252,12 @@
                     </button>
 
                     <!-- Error Message Container (Hidden by default, shown by auth.js) -->
-                    <div id="login_error" class="login-error-message">
-                    </div>
+                    <div id="login_error" class="login-error-message"></div>
                 </form>
             </div>
 
             <div style="text-align: center;">
-                <a href="/" class="login-back-link">
+                <a href="index.html" class="login-back-link">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="19" y1="12" x2="5" y2="12"></line>
                         <polyline points="12 19 5 12 12 5"></polyline>
