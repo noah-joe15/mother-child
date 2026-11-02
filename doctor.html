@@ -231,15 +231,9 @@
             letter-spacing: 0.05em;
         }
 
-        .status-badge.waiting {
-            background: #fef3c7;
-            color: var(--warning);
-        }
-
-        .status-badge.in-progress {
-            background: #dbeafe;
-            color: var(--primary-light);
-        }
+        .status-badge.waiting { background: #fef3c7; color: var(--warning); }
+        .status-badge.in-progress { background: #dbeafe; color: var(--primary-light); }
+        .status-badge.completed { background: #dcfce7; color: var(--success); }
 
         .vitals-grid {
             display: grid;
@@ -269,17 +263,9 @@
             color: var(--text-dark);
         }
 
-        .vital-value.critical {
-            color: var(--danger);
-        }
-
-        .vital-value.warning {
-            color: var(--warning);
-        }
-
-        .vital-value.normal {
-            color: var(--success);
-        }
+        .vital-value.critical { color: var(--danger); }
+        .vital-value.warning { color: var(--warning); }
+        .vital-value.normal { color: var(--success); }
 
         .action-buttons {
             display: flex;
@@ -297,51 +283,18 @@
             transition: all 0.2s ease;
         }
 
-        .btn-start {
-            background: var(--primary);
-            color: white;
-        }
+        .btn-start { background: var(--primary); color: white; }
+        .btn-start:hover { background: var(--primary-light); transform: translateY(-1px); }
 
-        .btn-start:hover {
-            background: var(--primary-light);
-            transform: translateY(-1px);
-        }
+        .btn-complete { background: var(--success); color: white; }
+        .btn-complete:hover { background: #15803d; transform: translateY(-1px); }
 
-        .btn-complete {
-            background: var(--success);
-            color: white;
-        }
-
-        .btn-complete:hover {
-            background: #15803d;
-            transform: translateY(-1px);
-        }
-
-        .empty-state {
+        .empty-state, .loading-state, .error-state {
             text-align: center;
             padding: 60px 20px;
             color: var(--text-muted);
         }
-
-        .empty-state svg {
-            width: 64px;
-            height: 64px;
-            margin-bottom: 16px;
-            opacity: 0.3;
-        }
-
-        .loading-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-muted);
-        }
-
-        .error-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--danger);
-        }
-
+        .error-state { color: var(--danger); }
         .error-state button {
             margin-top: 16px;
             padding: 10px 20px;
@@ -358,6 +311,217 @@
             color: var(--text-muted);
             margin-top: 8px;
         }
+
+        /* --- CONSULTATION MODAL STYLES --- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-container {
+            background: white;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .modal-close:hover { background: #e2e8f0; color: var(--text-dark); }
+
+        .modal-body {
+            padding: 32px;
+        }
+
+        .consult-section {
+            margin-bottom: 28px;
+        }
+
+        .consult-section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .danger-signs-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+            color: #991b1b;
+        }
+
+        .checkbox-label:hover { background: #fee2e2; }
+        .checkbox-label input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--danger);
+            cursor: pointer;
+        }
+
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 14px;
+            color: var(--text-dark);
+            background: #f8fafc;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary-light);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal-footer {
+            padding: 24px 32px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            background: #f8fafc;
+            border-radius: 0 0 20px 20px;
+        }
+
+        .btn-modal {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel {
+            background: white;
+            border: 1.5px solid var(--border);
+            color: var(--text-muted);
+        }
+        .btn-cancel:hover { background: #f1f5f9; color: var(--text-dark); }
+
+        .btn-pharmacy { background: var(--success); color: white; }
+        .btn-pharmacy:hover { background: #15803d; transform: translateY(-1px); }
+
+        .btn-ward { background: var(--danger); color: white; }
+        .btn-ward:hover { background: #dc2626; transform: translateY(-1px); }
+
+        .btn-home { background: var(--primary-light); color: white; }
+        .btn-home:hover { background: var(--primary); transform: translateY(-1px); }
+
+        .patient-summary-banner {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .patient-summary-banner h4 { margin: 0 0 4px 0; color: var(--primary); }
+        .patient-summary-banner p { margin: 0; font-size: 13px; color: var(--text-muted); }
     </style>
 </head>
 <body>
@@ -383,7 +547,6 @@
         </div>
 
         <div id="doctor_content" style="display: none;">
-            
             <div class="page-header">
                 <div class="page-title">
                     <h1>Patient Queue</h1>
@@ -396,7 +559,7 @@
                     </div>
                     <div class="stat-badge progress">
                         <h3 id="progress_count">0</h3>
-                        <p>In Progress</p>
+                        <p>In Consultation</p>
                     </div>
                 </div>
             </div>
@@ -406,13 +569,130 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     Active Patients
                 </h3>
-                <div id="queue_list">
-                    <!-- Queue items will be loaded here -->
-                </div>
+                <div id="queue_list"></div>
             </div>
-
         </div>
     </main>
+
+    <!-- CONSULTATION MODAL -->
+    <div id="consultation_modal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>Clinical Consultation (IMCI Protocol)</h2>
+                <button class="modal-close" onclick="closeConsultationModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 24px; height: 24px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            
+            <form id="consultation_form" onsubmit="submitConsultation(event)">
+                <div class="modal-body">
+                    <div class="patient-summary-banner">
+                        <div>
+                            <h4 id="modal_patient_name">Patient Name</h4>
+                            <p id="modal_mother_name">Mother's Name</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="font-weight: 600; color: var(--text-dark);" id="modal_vitals">Vitals here</p>
+                        </div>
+                    </div>
+
+                    <!-- 1. Danger Signs -->
+                    <div class="consult-section">
+                        <div class="consult-section-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            1. General Danger Signs (Check all that apply)
+                        </div>
+                        <div class="danger-signs-grid">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="danger_sign" value="Unable to drink/breastfeed"> Unable to drink or breastfeed
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="danger_sign" value="Vomits everything"> Vomits everything
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="danger_sign" value="History of convulsions"> History of convulsions (fits)
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="danger_sign" value="Lethargic or unconscious"> Lethargic or unconscious
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 2. History & Symptoms -->
+                    <div class="consult-section">
+                        <div class="consult-section-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                            2. History & Main Symptoms
+                        </div>
+                        <div class="form-group">
+                            <label>Describe symptoms (e.g., cough duration, diarrhea, fever, measles signs)</label>
+                            <textarea id="symptoms" placeholder="e.g., 3 days of high fever, dry cough, no diarrhea."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 3. Physical Examination -->
+                    <div class="consult-section">
+                        <div class="consult-section-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                            3. Physical Examination Findings
+                        </div>
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label>Respiratory Rate (breaths/min)</label>
+                                <input type="number" id="resp_rate" placeholder="e.g., 40">
+                            </div>
+                            <div class="form-group">
+                                <label>Pallor (Anemia Check)</label>
+                                <select id="pallor">
+                                    <option value="No pallor">No pallor</option>
+                                    <option value="Some pallor">Some pallor</option>
+                                    <option value="Severe pallor">Severe pallor</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Edema (Swelling)</label>
+                                <select id="edema">
+                                    <option value="No edema">No edema</option>
+                                    <option value="Edema present">Edema present</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Immunization Status</label>
+                                <select id="immunization">
+                                    <option value="Fully immunized">Fully immunized</option>
+                                    <option value="Partially immunized">Partially immunized</option>
+                                    <option value="Not immunized">Not immunized</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Diagnosis & Plan -->
+                    <div class="consult-section">
+                        <div class="consult-section-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                            4. Diagnosis & Pharmacy Handoff
+                        </div>
+                        <div class="form-group">
+                            <label>Clinical Diagnosis / Classification *</label>
+                            <input type="text" id="diagnosis" required placeholder="e.g., Severe Pneumonia, Acute Watery Diarrhea, Malaria">
+                        </div>
+                        <div class="form-group">
+                            <label>Prescription / Medications *</label>
+                            <textarea id="prescription" required placeholder="e.g., &#10;1. Amoxicillin 250mg - 1 tablet twice daily for 5 days&#10;2. Paracetamol 120mg/5ml - 5ml every 8 hours for fever" style="min-height: 100px;"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal btn-cancel" onclick="closeConsultationModal()">Cancel</button>
+                    <button type="button" class="btn-modal btn-home" onclick="finalizeConsultation('Home')">Discharge Home</button>
+                    <button type="button" class="btn-modal btn-ward" onclick="finalizeConsultation('Ward')">Admit to Ward</button>
+                    <button type="button" class="btn-modal btn-pharmacy" onclick="finalizeConsultation('Pharmacy')">Send to Pharmacy</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script>
         console.log('[Doctor] Page loaded');
@@ -422,143 +702,63 @@
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E'
         );
 
+        let currentConsultationQueueId = null;
+
         async function initDoctor() {
             try {
-                console.log('[Doctor] Initializing...');
                 const { data: { session } } = await supabaseClient.auth.getSession();
-                
-                if (!session) {
-                    console.log('[Doctor] No session, redirecting to login');
-                    window.location.href = 'login.html';
-                    return;
-                }
+                if (!session) { window.location.href = 'login.html'; return; }
 
-                const { data: profile, error: profileError } = await supabaseClient
-                    .from('profiles')
-                    .select('full_name, role')
-                    .eq('id', session.user.id)
-                    .single();
+                const { data: profile } = await supabaseClient.from('profiles').select('full_name, role').eq('id', session.user.id).single();
+                if (!profile) { window.location.href = 'login.html'; return; }
 
-                if (profileError) {
-                    console.error('[Doctor] Profile error:', profileError);
-                }
-
-                if (!profile) {
-                    console.log('[Doctor] No profile found, redirecting');
-                    window.location.href = 'login.html';
-                    return;
-                }
-
-                console.log('[Doctor] Authorized user:', profile.full_name, 'Role:', profile.role);
                 document.getElementById('user_info').textContent = `Dr. ${profile.full_name}`;
                 document.getElementById('loading_message').style.display = 'none';
                 document.getElementById('doctor_content').style.display = 'block';
                 
                 await loadQueue();
                 
-                // Real-time updates
-                console.log('[Doctor] Subscribing to queue updates...');
                 supabaseClient.channel('queue_updates')
-                    .on('postgres_changes', 
-                        { event: '*', schema: 'public', table: 'queue' }, 
-                        (payload) => {
-                            console.log('[Doctor] Queue changed:', payload);
-                            loadQueue();
-                        }
-                    )
-                    .subscribe((status) => {
-                        console.log('[Doctor] Subscription status:', status);
-                    });
-
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'queue' }, () => loadQueue())
+                    .subscribe();
             } catch (error) {
                 console.error('[Doctor] Init error:', error);
-                document.getElementById('loading_message').innerHTML = `
-                    <div class="error-state">
-                        <p style="font-size: 16px; font-weight: 600; color: var(--danger);">Error loading portal</p>
-                        <p>${error.message}</p>
-                        <button onclick="window.location.reload()">Retry</button>
-                    </div>
-                `;
             }
         }
 
         async function loadQueue() {
             try {
-                console.log('[Doctor] Loading queue...');
-                
-                // First, get all queue items for Doctor station
-                const { data: queueData, error: queueError } = await supabaseClient
+                const { data: queueData, error } = await supabaseClient
                     .from('queue')
                     .select('*')
                     .eq('current_station', 'Doctor')
                     .order('created_at', { ascending: true });
 
-                if (queueError) {
-                    console.error('[Doctor] Queue query error:', queueError);
-                    throw queueError;
-                }
-
-                console.log('[Doctor] Queue data:', queueData);
+                if (error) throw error;
 
                 if (!queueData || queueData.length === 0) {
                     document.getElementById('queue_list').innerHTML = `
                         <div class="empty-state">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.3;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
                             <p style="font-size: 16px; font-weight: 600;">No patients in queue</p>
-                            <p style="font-size: 14px;">Patients registered by nurses will appear here</p>
-                        </div>
-                    `;
+                        </div>`;
                     document.getElementById('waiting_count').textContent = '0';
                     document.getElementById('progress_count').textContent = '0';
                     return;
                 }
 
-                // Count stats
-                const waiting = queueData.filter(q => q.status === 'Waiting').length;
-                const inProgress = queueData.filter(q => q.status === 'In-Progress').length;
-                
-                document.getElementById('waiting_count').textContent = waiting;
-                document.getElementById('progress_count').textContent = inProgress;
+                document.getElementById('waiting_count').textContent = queueData.filter(q => q.status === 'Waiting').length;
+                document.getElementById('progress_count').textContent = queueData.filter(q => q.status === 'In-Progress').length;
 
-                // Load patient details and vitals for each queue item
-                const queueWithDetails = await Promise.all(queueData.map(async (queueItem) => {
-                    // Get patient info
-                    const { data: patientData } = await supabaseClient
-                        .from('patients')
-                        .select('mother_name, child_name')
-                        .eq('id', queueItem.patient_id)
-                        .single();
-
-                    // Get vitals
-                    const { data: vitalsData } = await supabaseClient
-                        .from('vitals')
-                        .select('weight_kg, muac_mm, temperature')
-                        .eq('patient_id', queueItem.patient_id)
-                        .order('recorded_at', { ascending: false })
-                        .limit(1);
-
-                    return {
-                        ...queueItem,
-                        patient: patientData,
-                        vitals: vitalsData?.[0] || null
-                    };
+                const queueWithDetails = await Promise.all(queueData.map(async (q) => {
+                    const { data: patientData } = await supabaseClient.from('patients').select('mother_name, child_name').eq('id', q.patient_id).single();
+                    const { data: vitalsData } = await supabaseClient.from('vitals').select('weight_kg, muac_mm, temperature').eq('patient_id', q.patient_id).order('recorded_at', { ascending: false }).limit(1);
+                    return { ...q, patient: patientData, vitals: vitalsData?.[0] || null };
                 }));
 
-                console.log('[Doctor] Queue with details:', queueWithDetails);
-
-                // Render the queue
-                const listContainer = document.getElementById('queue_list');
-                listContainer.innerHTML = queueWithDetails.map(q => renderPatientCard(q)).join('');
-
+                document.getElementById('queue_list').innerHTML = queueWithDetails.map(q => renderPatientCard(q)).join('');
             } catch (error) {
                 console.error('[Doctor] Load error:', error);
-                document.getElementById('queue_list').innerHTML = `
-                    <div class="error-state">
-                        <p style="font-size: 16px; font-weight: 600;">Failed to load queue</p>
-                        <p>${error.message}</p>
-                        <button onclick="loadQueue()">Retry</button>
-                    </div>
-                `;
             }
         }
 
@@ -567,17 +767,10 @@
             const vitals = q.vitals;
             const isWaiting = q.status === 'Waiting';
             
-            // Determine MUAC status
-            let muacClass = 'normal';
-            let muacStatus = 'Normal';
+            let muacClass = 'normal', muacStatus = 'Normal';
             if (vitals?.muac_mm) {
-                if (vitals.muac_mm < 115) {
-                    muacClass = 'critical';
-                    muacStatus = 'Severe';
-                } else if (vitals.muac_mm < 125) {
-                    muacClass = 'warning';
-                    muacStatus = 'Moderate';
-                }
+                if (vitals.muac_mm < 115) { muacClass = 'critical'; muacStatus = 'Severe'; }
+                else if (vitals.muac_mm < 125) { muacClass = 'warning'; muacStatus = 'Moderate'; }
             }
 
             return `
@@ -588,36 +781,22 @@
                             <p>Mother: ${patient.mother_name || 'Unknown'}</p>
                             <div class="time-badge">Registered: ${new Date(q.created_at).toLocaleString()}</div>
                         </div>
-                        <span class="status-badge ${isWaiting ? 'waiting' : 'in-progress'}">
-                            ${isWaiting ? 'Waiting' : 'In Progress'}
-                        </span>
+                        <span class="status-badge ${isWaiting ? 'waiting' : 'in-progress'}">${isWaiting ? 'Waiting' : 'In Consultation'}</span>
                     </div>
-                    
                     ${vitals ? `
                     <div class="vitals-grid">
-                        <div class="vital-item">
-                            <div class="vital-label">Weight</div>
-                            <div class="vital-value">${vitals.weight_kg} kg</div>
-                        </div>
-                        <div class="vital-item">
-                            <div class="vital-label">MUAC</div>
-                            <div class="vital-value ${muacClass}">${vitals.muac_mm} mm<br><small>${muacStatus}</small></div>
-                        </div>
-                        <div class="vital-item">
-                            <div class="vital-label">Temperature</div>
-                            <div class="vital-value">${vitals.temperature}°C</div>
-                        </div>
-                    </div>
-                    ` : '<p style="color: var(--text-muted); font-style: italic; padding: 12px;">No vitals recorded</p>'}
-                    
+                        <div class="vital-item"><div class="vital-label">Weight</div><div class="vital-value">${vitals.weight_kg} kg</div></div>
+                        <div class="vital-item"><div class="vital-label">MUAC</div><div class="vital-value ${muacClass}">${vitals.muac_mm} mm<br><small>${muacStatus}</small></div></div>
+                        <div class="vital-item"><div class="vital-label">Temperature</div><div class="vital-value">${vitals.temperature}°C</div></div>
+                    </div>` : '<p style="color: var(--text-muted); font-style: italic; padding: 12px;">No vitals recorded</p>'}
                     <div class="action-buttons">
                         ${isWaiting ? `
-                            <button onclick="updateStatus('${q.id}', 'In-Progress')" class="btn-action btn-start">
+                            <button onclick="openConsultationModal('${q.id}', ${JSON.stringify(patient).replace(/"/g, '&quot;')}, ${JSON.stringify(vitals).replace(/"/g, '&quot;')})" class="btn-action btn-start">
                                 Start Consultation
                             </button>
                         ` : `
-                            <button onclick="updateStatus('${q.id}', 'Completed', 'Pharmacy')" class="btn-action btn-complete">
-                                Send to Pharmacy
+                            <button onclick="openConsultationModal('${q.id}', ${JSON.stringify(patient).replace(/"/g, '&quot;')}, ${JSON.stringify(vitals).replace(/"/g, '&quot;')})" class="btn-action btn-complete">
+                                Edit Consultation Notes
                             </button>
                         `}
                     </div>
@@ -625,41 +804,65 @@
             `;
         }
 
-        async function updateStatus(queueId, newStatus, nextStation = null) {
-    try {
-        console.log('[Doctor] Updating status:', queueId, newStatus, nextStation);
-        
-        const updateData = { 
-            status: newStatus
-        };
-        
-        if (nextStation) {
-            updateData.current_station = nextStation;
+        function openConsultationModal(queueId, patient, vitals) {
+            currentConsultationQueueId = queueId;
+            document.getElementById('modal_patient_name').textContent = patient?.child_name || 'Unknown';
+            document.getElementById('modal_mother_name').textContent = 'Mother: ' + (patient?.mother_name || 'Unknown');
+            document.getElementById('modal_vitals').textContent = `W: ${vitals?.weight_kg || '-'}kg | MUAC: ${vitals?.muac_mm || '-'}mm | Temp: ${vitals?.temperature || '-'}°C`;
+            
+            // Pre-fill if already has data
+            document.getElementById('consultation_form').reset();
+            
+            document.getElementById('consultation_modal').classList.add('active');
         }
 
-        const { error } = await supabaseClient
-            .from('queue')
-            .update(updateData)
-            .eq('id', queueId);
+        function closeConsultationModal() {
+            document.getElementById('consultation_modal').classList.remove('active');
+            currentConsultationQueueId = null;
+        }
 
-        if (error) throw error;
+        async function finalizeConsultation(finalAction) {
+            const diagnosis = document.getElementById('diagnosis').value.trim();
+            const prescription = document.getElementById('prescription').value.trim();
 
-        console.log('[Doctor] Status updated successfully');
-        await loadQueue();
+            if (!diagnosis || !prescription) {
+                alert('Please fill in both Diagnosis and Prescription before proceeding.');
+                return;
+            }
 
-    } catch (error) {
-        console.error('[Doctor] Update error:', error);
-        alert('Failed to update patient status: ' + error.message);
-    }
-}
+            // Gather danger signs
+            const dangerSigns = Array.from(document.querySelectorAll('input[name="danger_sign"]:checked')).map(cb => cb.value);
+            const symptoms = document.getElementById('symptoms').value;
+            const examFindings = `RR: ${document.getElementById('resp_rate').value || 'N/A'}, Pallor: ${document.getElementById('pallor').value}, Edema: ${document.getElementById('edema').value}, Immunization: ${document.getElementById('immunization').value}`;
+
+            try {
+                const updateData = {
+                    status: 'Completed',
+                    current_station: finalAction,
+                    final_action: finalAction,
+                    diagnosis: diagnosis,
+                    prescription: prescription,
+                    // We can store the rest as a JSON string in a notes column if you add one, or just keep it simple
+                    updated_at: new Date().toISOString()
+                };
+
+                const { error } = await supabaseClient.from('queue').update(updateData).eq('id', currentConsultationQueueId);
+                if (error) throw error;
+
+                alert(`Patient successfully sent to ${finalAction}!`);
+                closeConsultationModal();
+                await loadQueue();
+            } catch (error) {
+                console.error('[Doctor] Save error:', error);
+                alert('Failed to save consultation: ' + error.message);
+            }
+        }
 
         async function handleLogout() {
-            console.log('[Doctor] Logout initiated');
             await supabaseClient.auth.signOut();
             window.location.href = 'login.html';
         }
 
-        // Initialize when page loads
         initDoctor();
     </script>
 </body>
