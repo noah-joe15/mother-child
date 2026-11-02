@@ -278,7 +278,7 @@
                     <line x1="20" y1="8" x2="20" y2="14"></line>
                     <line x1="23" y1="11" x2="17" y2="11"></line>
                 </svg>
-                Register Now
+                Create Account & Register
             </button>
 
             <div id="success_message" style="display: none; margin-top: 20px; padding: 16px; background: #dcfce7; border: 1px solid #86efac; border-radius: 12px; color: #166534; text-align: center; font-weight: 600; font-size: 15px;">
@@ -286,7 +286,7 @@
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                     <polyline points="22 4 12 14.01 9 11.01"></polyline>
                 </svg>
-                Registration successful!
+                Account created! Redirecting to your dashboard...
             </div>
         </form>
 
@@ -299,9 +299,10 @@
     </footer>
 
     <script>
+        // Initialize Supabase Client (Use supabaseClient instead of supabase to avoid conflict)
         const SUPABASE_URL = 'https://fmaaudmdgmgklvqcmvad.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         document.getElementById('registration_form').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -313,7 +314,7 @@
 
             try {
                 // Simply insert into patients table - NO auth signup to avoid 500 errors
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('patients')
                     .insert({
                         mother_name: document.getElementById('mother_name').value,
@@ -334,9 +335,13 @@
                 btn.innerHTML = '✓ Registered Successfully!';
                 btn.style.background = '#16a34a';
                 
+                // Store phone number in localStorage for dashboard to use
+                localStorage.setItem('mnh_user_phone', document.getElementById('phone_number').value);
+                localStorage.setItem('mnh_user_name', document.getElementById('mother_name').value);
+                
                 setTimeout(() => {
-                    alert('Registration successful!\n\nPlease contact the clinic to activate your account.\n\nPhone: ' + document.getElementById('phone_number').value);
-                    window.location.href = 'index.html';
+                    alert('Registration successful!\n\nRedirecting to your dashboard...');
+                    window.location.href = 'mother-dashboard.html';
                 }, 1000);
 
             } catch (error) {
