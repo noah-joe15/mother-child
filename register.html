@@ -240,25 +240,25 @@
                         <line x1="15" y1="9" x2="15.01" y2="9"></line>
                     </svg>
                 </div>
-                <h2 style="font-size: 20px; font-weight: 700; color: var(--blue-primary); margin: 0;">Child's Information</h2>
+                <h2 style="font-size: 20px; font-weight: 700; color: var(--blue-primary); margin: 0;">Child's Information <span style="font-size: 13px; font-weight: 500; color: var(--text-muted); text-transform: none; letter-spacing: normal;">(Optional for antenatal/unborn)</span></h2>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                 <div class="form-group">
-                    <label>Child's Full Name *</label>
-                    <input type="text" id="child_name" required placeholder="e.g., Neema Sarah">
+                    <label>Child's Full Name</label>
+                    <input type="text" id="child_name" placeholder="Leave blank if unborn">
                 </div>
                 <div class="form-group">
-                    <label>Date of Birth *</label>
-                    <input type="date" id="child_dob" required>
+                    <label>Date of Birth</label>
+                    <input type="date" id="child_dob">
                 </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px;">
                 <div class="form-group">
-                    <label>Sex *</label>
-                    <select id="child_sex" required>
-                        <option value="">Select Sex</option>
+                    <label>Sex</label>
+                    <select id="child_sex">
+                        <option value="">Select Sex (if known)</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
                     </select>
@@ -310,16 +310,22 @@
             btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10" stroke-opacity="1"></path></svg> Processing...';
             btn.disabled = true;
 
+            // Get child values, use null if empty
+            const childNameVal = document.getElementById('child_name').value.trim();
+            const childDobVal = document.getElementById('child_dob').value;
+            const childSexVal = document.getElementById('child_sex').value;
+            const birthWeightVal = document.getElementById('birth_weight').value;
+
             const patientData = {
                 mother_name: document.getElementById('mother_name').value,
                 mother_age: document.getElementById('mother_age').value,
                 phone_number: document.getElementById('phone_number').value,
                 sha_number: document.getElementById('sha_number').value,
                 residence: document.getElementById('residence').value,
-                child_name: document.getElementById('child_name').value,
-                child_dob: document.getElementById('child_dob').value,
-                child_sex: document.getElementById('child_sex').value,
-                birth_weight: document.getElementById('birth_weight').value,
+                child_name: childNameVal === '' ? null : childNameVal,
+                child_dob: childDobVal === '' ? null : childDobVal,
+                child_sex: childSexVal === '' ? null : childSexVal,
+                birth_weight: birthWeightVal === '' ? null : parseFloat(birthWeightVal),
                 created_at: new Date().toISOString()
             };
 
