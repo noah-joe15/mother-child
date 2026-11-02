@@ -299,7 +299,7 @@
     </footer>
 
     <script>
-        // Initialize Supabase Client (Renamed to supabaseClient to avoid conflict with global window.supabase)
+        // Initialize Supabase Client
         const SUPABASE_URL = 'https://fmaaudmdgmgklvqcmvad.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -327,8 +327,8 @@
 
             try {
                 // STEP 1: Create Auth Account for Mother using phone number as email
-                const authEmail = `${phoneNumber}@mnh.local`; // Format phone as email
-                const defaultPassword = phoneNumber; // Default password is phone number
+                const authEmail = `${phoneNumber}@mnh.local`;
+                const defaultPassword = phoneNumber;
                 
                 console.log('[Register] Creating auth account for:', authEmail);
                 
@@ -345,10 +345,17 @@
                 });
 
                 if (authError) {
+                    console.error('[Register] Auth error details:', authError);
                     if (authError.message.includes('already registered')) {
                         throw new Error('This phone number is already registered. Please login instead.');
+                    } else if (authError.message.includes('Database error')) {
+                        throw new Error('Unable to create account. Please contact support or try again later.');
                     }
                     throw authError;
+                }
+
+                if (!authData.user) {
+                    throw new Error('Failed to create user account');
                 }
 
                 console.log('[Register] Auth account created:', authData);
@@ -364,9 +371,11 @@
                     child_dob: childDobVal === '' ? null : childDobVal,
                     child_sex: childSexVal === '' ? null : childSexVal,
                     birth_weight: birthWeightVal === '' ? null : parseFloat(birthWeightVal),
-                    user_id: authData.user.id, // Link to auth user
+                    user_id: authData.user.id,
                     created_at: new Date().toISOString()
                 };
+
+                console.log('[Register] Saving patient data:', patientData);
 
                 const { data: patient, error: patientError } = await supabaseClient
                     .from('patients')
@@ -376,10 +385,10 @@
 
                 if (patientError) {
                     console.error('[Register] Patient save error:', patientError);
-                    throw patientError;
+                    throw new Error('Account created but failed to save medical records. Please contact support.');
                 }
 
-                console.log('[Register] Patient saved:', patient);
+                console.log('[Register] Patient saved successfully:', patient);
 
                 // STEP 3: Auto-login the mother
                 console.log('[Register] Auto-logging in...');
@@ -388,16 +397,17 @@
                     password: defaultPassword
                 });
 
-                if (signInError) throw signInError;
+                if (signInError) {
+                    console.warn('[Register] Auto-login failed:', signInError);
+                }
 
-                // STEP 4: Show success and redirect to mother dashboard
+                // STEP 4: Show success and redirect
                 document.getElementById('success_message').style.display = 'block';
                 btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 18px; height: 18px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Account Created Successfully!';
                 btn.style.background = '#16a34a';
                 
-                // Show login credentials alert (No emojis, strictly text)
                 setTimeout(() => {
-                    alert(`Account Created Successfully!\n\nYour Login Details:\nPhone: ${phoneNumber}\nPassword: ${phoneNumber}\n\nYou can use these to login anytime.\n\nRedirecting to your dashboard...`);
+                    alert(`Account Created Successfully!\n\nYour Login Details:\nPhone: ${phoneNumber}\nPassword: ${phoneNumber}\n\nRedirecting to your dashboard...`);
                     window.location.href = 'mother-dashboard.html';
                 }, 1000);
 
