@@ -4,126 +4,555 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nurse Portal - MNH RCH</title>
-    <link rel="stylesheet" href="/style.css?v=5">
+    <link rel="stylesheet" href="/style.css?v=6">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #ef4444;
+            --bg-ivory: #FFFFF0;
+            --bg-cream: #FDF5E6;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 12px rgba(30, 58, 138, 0.08);
+            --shadow-lg: 0 12px 32px rgba(30, 58, 138, 0.12);
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-ivory) 0%, var(--bg-cream) 100%);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            padding: 16px 0;
+        }
+
+        .logo-mark {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .logo-text span {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: 1.5px solid var(--border);
+            color: var(--text-dark);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout:hover {
+            background: #fee2e2;
+            border-color: var(--danger);
+            color: var(--danger);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+        }
+
+        .page-header {
+            margin-bottom: 32px;
+        }
+
+        .page-header h1 {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-card.registered .stat-number { color: var(--primary-light); }
+        .stat-card.awaiting .stat-number { color: var(--warning); }
+        .stat-card.completed .stat-number { color: var(--success); }
+
+        .form-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 32px;
+            box-shadow: var(--shadow);
+        }
+
+        .form-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .form-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+
+        .form-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .form-section {
+            margin-bottom: 32px;
+        }
+
+        .section-header {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-header::before {
+            content: '';
+            width: 4px;
+            height: 4px;
+            background: var(--primary-light);
+            border-radius: 50%;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .form-grid-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .form-group {
+            margin-bottom: 4px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 15px;
+            color: var(--text-dark);
+            background: #f8fafc;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            outline: none;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--primary-light);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-group input::placeholder {
+            color: #94a3b8;
+        }
+
+        .status-box {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-top: 24px;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .status-box.neutral {
+            background: #f1f5f9;
+            color: var(--text-muted);
+            border: 1.5px solid var(--border);
+        }
+
+        .status-box.success {
+            background: #dcfce7;
+            color: var(--success);
+            border: 1.5px solid #86efac;
+        }
+
+        .status-box.warning {
+            background: #fef3c7;
+            color: var(--warning);
+            border: 1.5px solid #fcd34d;
+        }
+
+        .status-box.danger {
+            background: #fee2e2;
+            color: var(--danger);
+            border: 1.5px solid #fca5a5;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
+            margin-top: 8px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(30, 58, 138, 0.35);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .recent-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: var(--shadow);
+        }
+
+        .recent-header {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .patient-item {
+            padding: 16px 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+            border: 1.5px solid transparent;
+        }
+
+        .patient-item:hover {
+            background: white;
+            border-color: var(--border);
+            box-shadow: var(--shadow);
+            transform: translateX(4px);
+        }
+
+        .patient-info h4 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0 0 4px 0;
+        }
+
+        .patient-info p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .patient-meta {
+            text-align: right;
+        }
+
+        .patient-meta div {
+            font-size: 13px;
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        .patient-meta small {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 768px) {
+            .form-grid,
+            .form-grid-3 {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .patient-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            
+            .patient-meta {
+                text-align: left;
+            }
+        }
+
+        .loading-skeleton {
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 8px;
+            height: 20px;
+            margin-bottom: 12px;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
 </head>
 <body>
 
     <nav class="navbar">
         <div class="container nav-inner">
-            <a href="index.html" class="logo">
+            <a href="index.html" class="logo" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
                 <div class="logo-mark">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M2 12h20"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 24px; height: 24px;"><path d="M12 2v20M2 12h20"/></svg>
                 </div>
                 <div class="logo-text">MNH RCH <span>Nurse Portal</span></div>
             </a>
             <div style="display: flex; align-items: center; gap: 16px;">
                 <div id="network_status" class="network-badge offline"><span id="network_text">OFFLINE</span></div>
-                <span id="user_info" style="font-size: 14px; font-weight: 600;">Loading...</span>
-                <button onclick="handleLogout()" style="background: transparent; border: 1px solid #e5e7eb; color: #0f172a; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'; this.style.borderColor='#ef4444'; this.style.color='#ef4444'" onmouseout="this.style.background='transparent'; this.style.borderColor='#e5e7eb'; this.style.color='#0f172a'">Logout</button>
+                <span id="user_info" style="font-size: 14px; font-weight: 600; color: var(--text-dark);">Loading...</span>
+                <button onclick="handleLogout()" class="btn-logout">Logout</button>
             </div>
         </div>
     </nav>
 
-    <main class="container" style="padding: 40px 20px; max-width: 1000px;">
+    <main class="container" style="padding: 40px 20px; max-width: 1100px;">
         
-        <div id="loading_message" style="text-align: center; padding: 60px; color: var(--text-muted);">
-            <p>Loading nurse portal...</p>
+        <div id="loading_message" style="text-align: center; padding: 80px 20px;">
+            <div class="loading-skeleton" style="max-width: 300px; margin: 0 auto 16px;"></div>
+            <div class="loading-skeleton" style="max-width: 200px; margin: 0 auto;"></div>
         </div>
 
         <div id="nurse_content" style="display: none;">
             
-            <div style="margin-bottom: 32px;">
-                <h1 style="font-size: 28px; font-weight: 800; margin-bottom: 8px;">Nurse Station</h1>
-                <p style="color: var(--text-muted);">Register patients and record vital signs</p>
+            <div class="page-header">
+                <h1>Nurse Station</h1>
+                <p>Register patients and record vital signs</p>
             </div>
 
             <!-- Stats -->
-            <div class="features-grid" style="margin-bottom: 32px;">
-                <div class="feature-card" style="text-align: center; padding: 20px;">
-                    <h3 id="stat_registered" style="font-size: 32px; color: var(--blue-accent); margin: 0;">0</h3>
-                    <p style="font-size: 12px; color: var(--text-light); margin: 4px 0 0;">Registered Today</p>
+            <div class="stats-grid">
+                <div class="stat-card registered">
+                    <div class="stat-number" id="stat_registered">0</div>
+                    <div class="stat-label">Registered Today</div>
                 </div>
-                <div class="feature-card" style="text-align: center; padding: 20px;">
-                    <h3 id="stat_awaiting" style="font-size: 32px; color: #d97706; margin: 0;">0</h3>
-                    <p style="font-size: 12px; color: var(--text-light); margin: 4px 0 0;">Awaiting Doctor</p>
+                <div class="stat-card awaiting">
+                    <div class="stat-number" id="stat_awaiting">0</div>
+                    <div class="stat-label">Awaiting Doctor</div>
                 </div>
-                <div class="feature-card" style="text-align: center; padding: 20px;">
-                    <h3 id="stat_completed" style="font-size: 32px; color: #16a34a; margin: 0;">0</h3>
-                    <p style="font-size: 12px; color: var(--text-light); margin: 4px 0 0;">Completed Today</p>
+                <div class="stat-card completed">
+                    <div class="stat-number" id="stat_completed">0</div>
+                    <div class="stat-label">Completed Today</div>
                 </div>
             </div>
 
             <!-- Registration Form -->
-            <div class="patient-card" style="padding: 32px; margin-bottom: 32px;">
-                <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
-                    <div class="feature-icon" style="margin: 0; background: var(--blue-soft); color: var(--blue-accent);">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 24px; height: 24px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/></svg>
+            <div class="form-card">
+                <div class="form-header">
+                    <div class="form-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 28px; height: 28px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/></svg>
                     </div>
-                    New Patient Registration & Vitals
-                </h2>
+                    <h2 class="form-title">New Patient Registration & Vitals</h2>
+                </div>
 
                 <form id="nurse_form">
-                    <h3 style="font-size: 15px; font-weight: 600; color: var(--text-muted); margin: 24px 0 16px; text-transform: uppercase; border-bottom: 2px solid var(--border); padding-bottom: 8px;">Mother's Information</h3>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        <div class="form-group">
-                            <label>Mother's Full Name *</label>
-                            <input type="text" id="mother_name" required placeholder="e.g., Sarah John Mwashambwa">
-                        </div>
-                        <div class="form-group">
-                            <label>Phone Number *</label>
-                            <input type="tel" id="phone_number" required placeholder="0712345678">
-                        </div>
-                    </div>
-
-                    <h3 style="font-size: 15px; font-weight: 600; color: var(--text-muted); margin: 24px 0 16px; text-transform: uppercase; border-bottom: 2px solid var(--border); padding-bottom: 8px;">Child's Information</h3>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        <div class="form-group">
-                            <label>Child's Name *</label>
-                            <input type="text" id="child_name" required placeholder="e.g., Neema Sarah">
-                        </div>
-                        <div class="form-group">
-                            <label>Date of Birth *</label>
-                            <input type="date" id="child_dob" required>
+                    <div class="form-section">
+                        <div class="section-header">Mother's Information</div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Mother's Full Name *</label>
+                                <input type="text" id="mother_name" required placeholder="e.g., Sarah John Mwashambwa">
+                            </div>
+                            <div class="form-group">
+                                <label>Phone Number *</label>
+                                <input type="tel" id="phone_number" required placeholder="0712345678">
+                            </div>
                         </div>
                     </div>
 
-                    <h3 style="font-size: 15px; font-weight: 600; color: var(--text-muted); margin: 24px 0 16px; text-transform: uppercase; border-bottom: 2px solid var(--border); padding-bottom: 8px;">Vital Signs</h3>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
-                        <div class="form-group">
-                            <label>Weight (kg) *</label>
-                            <input type="number" step="0.01" id="weight_kg" required placeholder="7.50">
-                        </div>
-                        <div class="form-group">
-                            <label>MUAC (mm) *</label>
-                            <input type="number" id="muac_mm" required placeholder="120" oninput="checkNutrition(this.value)">
-                        </div>
-                        <div class="form-group">
-                            <label>Temperature (°C) *</label>
-                            <input type="number" step="0.1" id="temperature" required placeholder="36.5">
+                    <div class="form-section">
+                        <div class="section-header">Child's Information</div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Child's Name *</label>
+                                <input type="text" id="child_name" required placeholder="e.g., Neema Sarah">
+                            </div>
+                            <div class="form-group">
+                                <label>Date of Birth *</label>
+                                <input type="date" id="child_dob" required>
+                            </div>
                         </div>
                     </div>
 
-                    <div id="nutrition_status" class="status-box neutral" style="margin-top: 16px;">
-                        <span>Enter MUAC to check nutritional status</span>
+                    <div class="form-section">
+                        <div class="section-header">Vital Signs</div>
+                        <div class="form-grid form-grid-3">
+                            <div class="form-group">
+                                <label>Weight (kg) *</label>
+                                <input type="number" step="0.01" id="weight_kg" required placeholder="7.50">
+                            </div>
+                            <div class="form-group">
+                                <label>MUAC (mm) *</label>
+                                <input type="number" id="muac_mm" required placeholder="120" oninput="checkNutrition(this.value)">
+                            </div>
+                            <div class="form-group">
+                                <label>Temperature (°C) *</label>
+                                <input type="number" step="0.1" id="temperature" required placeholder="36.5">
+                            </div>
+                        </div>
+
+                        <div id="nutrition_status" class="status-box neutral">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                            <span>Enter MUAC to check nutritional status</span>
+                        </div>
                     </div>
 
-                    <button type="submit" id="submit_btn" class="btn-primary" style="width: 100%; padding: 14px; font-size: 15px; font-weight: 600; border-radius: 100px; margin-top: 24px;">
-                        Register Patient & Send to Queue
+                    <button type="submit" id="submit_btn" class="btn-submit">
+                        <span style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                            Register Patient & Send to Queue
+                        </span>
                     </button>
                 </form>
             </div>
 
             <!-- Recent Activity -->
-            <div class="patient-card" style="padding: 32px;">
-                <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 20px;">Recent Patients</h3>
+            <div class="recent-card">
+                <h3 class="recent-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    Recent Patients
+                </h3>
                 <div id="recent_list">
-                    <p style="color: var(--text-muted); text-align: center; padding: 20px;">Loading...</p>
+                    <p style="color: var(--text-muted); text-align: center; padding: 40px;">Loading recent patients...</p>
                 </div>
             </div>
 
@@ -133,7 +562,6 @@
     <script>
         console.log('[Nurse] Page loaded');
         
-        // Renamed to supabaseClient to avoid conflict with the library's global 'supabase'
         const supabaseClient = window.supabase.createClient(
             'https://fmaaudmdgmgklvqcmvad.supabase.co',
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E'
@@ -175,7 +603,7 @@
                 
             } catch (error) {
                 console.error('[Nurse] Init error:', error);
-                document.getElementById('loading_message').innerHTML = '<p style="color: #ef4444;">Error loading portal. Please refresh.</p>';
+                document.getElementById('loading_message').innerHTML = '<p style="color: var(--danger); font-size: 16px; font-weight: 600;">️ Error loading portal. Please refresh the page.</p>';
             }
         }
 
@@ -185,11 +613,11 @@
                 console.log('[Nurse] Form submitted');
                 
                 const btn = document.getElementById('submit_btn');
-                btn.innerHTML = 'Processing...';
+                const originalContent = btn.innerHTML;
+                btn.innerHTML = '<span style="display: flex; align-items: center; justify-content: center; gap: 10px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-opacity="1"/></svg> Processing...</span>';
                 btn.disabled = true;
 
                 try {
-                    // Register patient
                     const { data: patient, error: pError } = await supabaseClient
                         .from('patients')
                         .insert({
@@ -204,7 +632,6 @@
 
                     if (pError) throw pError;
 
-                    // Save vitals
                     await supabaseClient.from('vitals').insert({
                         patient_id: patient.id,
                         weight_kg: parseFloat(document.getElementById('weight_kg').value),
@@ -213,7 +640,6 @@
                         recorded_at: new Date().toISOString()
                     });
 
-                    // Add to queue
                     await supabaseClient.from('queue').insert({
                         patient_id: patient.id,
                         current_station: 'Doctor',
@@ -221,17 +647,25 @@
                         created_at: new Date().toISOString()
                     });
 
-                    alert('✓ Patient registered successfully!');
-                    document.getElementById('nurse_form').reset();
-                    document.getElementById('nutrition_status').className = 'status-box neutral';
-                    document.getElementById('nutrition_status').innerHTML = '<span>Enter MUAC to check nutritional status</span>';
-                    loadStats();
+                    // Success animation
+                    btn.innerHTML = '<span style="display: flex; align-items: center; justify-content: center; gap: 10px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 20px; height: 20px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Success!</span>';
+                    btn.style.background = 'linear-gradient(135deg, #16a34a, #22c55e)';
+                    
+                    setTimeout(() => {
+                        alert('✓ Patient registered successfully and sent to doctor\'s queue!');
+                        document.getElementById('nurse_form').reset();
+                        document.getElementById('nutrition_status').className = 'status-box neutral';
+                        document.getElementById('nutrition_status').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Enter MUAC to check nutritional status</span>';
+                        btn.innerHTML = originalContent;
+                        btn.style.background = '';
+                        btn.disabled = false;
+                        loadStats();
+                    }, 500);
 
                 } catch (error) {
                     console.error('[Nurse] Save error:', error);
                     alert('Error: ' + error.message);
-                } finally {
-                    btn.innerHTML = 'Register Patient & Send to Queue';
+                    btn.innerHTML = originalContent;
                     btn.disabled = false;
                 }
             });
@@ -243,16 +677,16 @@
             
             if (isNaN(val)) {
                 box.className = 'status-box neutral';
-                box.innerHTML = '<span>Enter MUAC to check nutritional status</span>';
+                box.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Enter MUAC to check nutritional status</span>';
             } else if (val < 115) {
                 box.className = 'status-box danger';
-                box.innerHTML = '<span>SEVERE MALNUTRITION (RED) - Immediate Attention!</span>';
+                box.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>SEVERE MALNUTRITION (RED) - Immediate Attention Required!</span>';
             } else if (val < 125) {
                 box.className = 'status-box warning';
-                box.innerHTML = '<span>MODERATE MALNUTRITION (YELLOW) - Monitor Closely</span>';
+                box.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>MODERATE MALNUTRITION (YELLOW) - Monitor Closely</span>';
             } else {
                 box.className = 'status-box success';
-                box.innerHTML = '<span>HEALTHY (GREEN) - Normal Nutrition</span>';
+                box.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>HEALTHY (GREEN) - Normal Nutrition Status</span>';
             }
         }
 
@@ -268,25 +702,30 @@
             const { count: compCount } = await supabaseClient.from('queue').select('*', { count: 'exact', head: true }).eq('status', 'Completed').gte('created_at', `${today}T00:00:00`);
             document.getElementById('stat_completed').textContent = compCount || 0;
 
-            // Load recent
             const { data: recent } = await supabaseClient.from('vitals').select('*, patients(mother_name, child_name)').order('recorded_at', { ascending: false }).limit(5);
             const list = document.getElementById('recent_list');
             
             if (!recent || recent.length === 0) {
-                list.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">No recent patients</p>';
+                list.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 40px; font-style: italic;">No recent patients registered yet</p>';
             } else {
-                list.innerHTML = recent.map(v => `
-                    <div style="padding: 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <div style="font-weight: 600;">${v.patients?.child_name || 'Unknown'}</div>
-                            <div style="font-size: 13px; color: var(--text-muted);">${v.patients?.mother_name}</div>
+                list.innerHTML = recent.map(v => {
+                    const muacStatus = v.muac_mm < 115 ? 'danger' : v.muac_mm < 125 ? 'warning' : 'success';
+                    const muacText = v.muac_mm < 115 ? 'Severe' : v.muac_mm < 125 ? 'Moderate' : 'Healthy';
+                    const muacColor = v.muac_mm < 115 ? '#ef4444' : v.muac_mm < 125 ? '#d97706' : '#16a34a';
+                    
+                    return `
+                        <div class="patient-item">
+                            <div class="patient-info">
+                                <h4>${v.patients?.child_name || 'Unknown Child'}</h4>
+                                <p>Mother: ${v.patients?.mother_name || 'Unknown'}</p>
+                            </div>
+                            <div class="patient-meta">
+                                <div>W: ${v.weight_kg}kg | MUAC: <span style="color: ${muacColor}; font-weight: 700;">${v.muac_mm}mm (${muacText})</span></div>
+                                <small>${new Date(v.recorded_at).toLocaleTimeString()}</small>
+                            </div>
                         </div>
-                        <div style="text-align: right; font-size: 13px;">
-                            <div>W: ${v.weight_kg}kg | MUAC: ${v.muac_mm}mm</div>
-                            <div style="color: var(--text-light);">${new Date(v.recorded_at).toLocaleTimeString()}</div>
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
         }
 
@@ -311,7 +750,11 @@
             window.location.href = 'login.html';
         }
 
-        // Initialize
+        // Add spin animation
+        const style = document.createElement('style');
+        style.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+        document.head.appendChild(style);
+
         initNurse();
     </script>
 </body>
