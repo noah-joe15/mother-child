@@ -4,14 +4,198 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Staff Login - MNH RCH E-Clinic</title>
-    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/style.css?v=4">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Load Supabase FIRST, then our auth engine -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/auth.js"></script>
+    <script src="/auth.js?v=4"></script>
+
+    <style>
+        /* Login-specific styles to ensure perfect rendering */
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(135deg, #FFFFF0 0%, #F5F0E1 100%);
+        }
+
+        .login-main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 440px;
+        }
+
+        .login-header-section {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #FDF5E6;
+            border: 1px solid #e5e7eb;
+            padding: 10px 20px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e3a8a;
+            margin-bottom: 24px;
+        }
+
+        .login-badge svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .login-header-section h1 {
+            font-size: 32px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        .login-header-section p {
+            font-size: 15px;
+            color: #475569;
+            line-height: 1.6;
+        }
+
+        .login-form-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 12px 32px rgba(30, 58, 138, 0.08);
+        }
+
+        .login-form-card .form-group {
+            margin-bottom: 20px;
+        }
+
+        .login-form-card label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .login-form-card input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 15px;
+            color: #0f172a;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .login-form-card input:focus {
+            border-color: #2563eb;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .login-form-card input::placeholder {
+            color: #94a3b8;
+        }
+
+        .login-submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: #1e3a8a;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(30, 58, 138, 0.2);
+            font-family: 'Inter', sans-serif;
+            margin-top: 8px;
+        }
+
+        .login-submit-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(30, 58, 138, 0.25);
+        }
+
+        .login-submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .login-error-message {
+            margin-top: 16px;
+            padding: 12px;
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            border-radius: 8px;
+            color: #991b1b;
+            font-size: 13px;
+            font-weight: 500;
+            text-align: center;
+            display: none;
+        }
+
+        .login-back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 32px;
+            transition: color 0.2s;
+        }
+
+        .login-back-link:hover {
+            color: #2563eb;
+        }
+
+        .login-back-link svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .login-footer {
+            background: #ffffff;
+            border-top: 1px solid #e5e7eb;
+            padding: 24px 20px;
+            text-align: center;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .login-footer strong {
+            color: #1e3a8a;
+            font-weight: 700;
+        }
+    </style>
 </head>
-<body>
+<body class="login-page">
 
     <!-- Simplified Navigation for Login -->
     <nav class="navbar">
@@ -31,11 +215,11 @@
     </nav>
 
     <!-- Login Container -->
-    <main class="container">
-        <div class="login-container">
+    <main class="login-main">
+        <div class="login-wrapper">
             
-            <div class="login-header">
-                <div class="badge" style="margin-bottom: 24px;">
+            <div class="login-header-section">
+                <div class="login-badge">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
@@ -46,7 +230,7 @@
                 <p>Please enter your credentials to access the clinical dashboard.</p>
             </div>
 
-            <div class="login-card">
+            <div class="login-form-card">
                 <form id="login_form">
                     <div class="form-group">
                         <label for="email">Staff Email Address</label>
@@ -58,19 +242,19 @@
                         <input type="password" id="password" required placeholder="••••••••" autocomplete="current-password">
                     </div>
 
-                    <button type="submit" class="btn-primary" style="margin-top: 8px;">
+                    <button type="submit" class="login-submit-btn">
                         Sign In to Dashboard
                     </button>
 
                     <!-- Error Message Container (Hidden by default, shown by auth.js) -->
-                    <div id="login_error" style="display: none; margin-top: 16px; padding: 12px; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 8px; color: #991b1b; font-size: 13px; font-weight: 500; text-align: center;">
+                    <div id="login_error" class="login-error-message">
                     </div>
                 </form>
             </div>
 
-            <div style="text-align: center; margin-top: 32px;">
-                <a href="/" class="back-link">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
+            <div style="text-align: center;">
+                <a href="/" class="login-back-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="19" y1="12" x2="5" y2="12"></line>
                         <polyline points="12 19 5 12 12 5"></polyline>
                     </svg>
@@ -82,10 +266,8 @@
     </main>
 
     <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <p>Built with pride in Tanzania · <strong>MNH RCH E-Clinic</strong> · Aligned with Dira ya Taifa 2050</p>
-        </div>
+    <footer class="login-footer">
+        <p>Built with pride in Tanzania · <strong>MNH RCH E-Clinic</strong> · Aligned with Dira ya Taifa 2050</p>
     </footer>
 
 </body>
