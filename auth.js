@@ -1,7 +1,6 @@
 /**
  * MNH RCH E-Clinic - Authentication Engine
  * Handles login, role-based routing, and session management.
- * Updated for unified Nurse and Doctor portals.
  */
 
 // ==========================================
@@ -12,8 +11,14 @@ const AUTH_CONFIG = {
     SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E'
 };
 
-// Initialize Supabase Client
-const supabase = window.supabase.createClient(AUTH_CONFIG.SUPABASE_URL, AUTH_CONFIG.SUPABASE_KEY);
+// Initialize Supabase Client ONLY if it doesn't exist already
+const supabase = window.supabase 
+    ? window.supabase.createClient(AUTH_CONFIG.SUPABASE_URL, AUTH_CONFIG.SUPABASE_KEY)
+    : null;
+
+if (!supabase) {
+    console.error('[Auth] Supabase library not loaded!');
+}
 
 // ==========================================
 // 2. LOGIN HANDLER
@@ -21,7 +26,7 @@ const supabase = window.supabase.createClient(AUTH_CONFIG.SUPABASE_URL, AUTH_CON
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login_form');
     
-    if (loginForm) {
+    if (loginForm && supabase) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -100,6 +105,12 @@ document.addEventListener('DOMContentLoaded', () => {
 // 3. AUTH CHECK HELPER (For protected pages)
 // ==========================================
 async function checkAuth() {
+    if (!supabase) {
+        console.error('[Auth] Supabase not initialized');
+        window.location.href = 'login.html';
+        return null;
+    }
+
     try {
         const { data: { session } } = await supabase.auth.getSession();
         
@@ -121,6 +132,11 @@ async function checkAuth() {
 // 4. LOGOUT FUNCTION (Exposed globally for HTML onclick)
 // ==========================================
 window.handleLogout = async function() {
+    if (!supabase) {
+        window.location.href = 'login.html';
+        return;
+    }
+
     try {
         await supabase.auth.signOut();
         localStorage.removeItem('mnh_user_role');
