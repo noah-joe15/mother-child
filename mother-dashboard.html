@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Child's Health - MNH RCH</title>
+    <link rel="stylesheet" href="/style.css?v=6">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #ef4444;
+            --bg-ivory: #FFFFF0;
+            --bg-cream: #FDF5E6;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 12px rgba(30, 58, 138, 0.08);
+            --shadow-lg: 0 12px 32px rgba(30, 58, 138, 0.12);
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-ivory) 0%, var(--bg-cream) 100%);
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-dark);
+        }
+
+        .navbar {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            padding: 16px 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .nav-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .logo-mark {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .logo-text span {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .user-pill {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f8fafc;
+            padding: 8px 16px;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+        }
+
+        .user-pill-info {
+            text-align: right;
+        }
+
+        .user-pill-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .user-pill-phone {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: 1.5px solid var(--border);
+            color: var(--text-dark);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-logout:hover {
+            background: #fee2e2;
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        main {
+            padding: 32px 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-icon.blue { background: #dbeafe; color: var(--primary); }
+        .card-icon.green { background: #dcfce7; color: var(--success); }
+        .card-icon.orange { background: #fef3c7; color: var(--warning); }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .profile-detail {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .profile-detail:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .status-badge.success { background: #dcfce7; color: var(--success); }
+        .status-badge.warning { background: #fef3c7; color: var(--warning); }
+
+        .vaccination-alert {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border: 1px solid #bfdbfe;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .vaccination-info h3 {
+            margin: 0 0 4px 0;
+            font-size: 16px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .vaccination-info p {
+            margin: 0;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .btn-secondary {
+            background: white;
+            border: 1.5px solid var(--primary);
+            color: var(--primary);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .quick-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .action-btn {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .action-btn:hover {
+            border-color: var(--primary-light);
+            background: #f8fafc;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .action-icon {
+            width: 40px;
+            height: 40px;
+            background: #f1f5f9;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+
+        .action-btn:hover .action-icon {
+            background: var(--primary);
+            color: white;
+        }
+
+        .action-label {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .activity-item {
+            display: flex;
+            gap: 16px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .activity-date {
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .activity-day {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .activity-month {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .activity-details h4 {
+            margin: 0 0 4px 0;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .activity-details p {
+            margin: 0 0 8px 0;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .activity-vitals {
+            display: flex;
+            gap: 12px;
+        }
+
+        .vital-tag {
+            background: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-dark);
+            border: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container nav-inner">
+            <a href="index.html" class="logo">
+                <div class="logo-mark">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 20px; height: 20px;">
+                        <path d="M12 2v20M2 12h20"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    MNH RCH
+                    <span>Mother Portal</span>
+                </div>
+            </a>
+            
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div class="user-pill">
+                    <div class="user-pill-info">
+                        <div class="user-pill-name" id="user_name">Loading...</div>
+                        <div class="user-pill-phone" id="user_phone">...</div>
+                    </div>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 32px; height: 32px; color: var(--primary);">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <button onclick="handleLogout()" class="btn-logout">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Next Vaccination Alert -->
+        <div class="vaccination-alert">
+            <div class="vaccination-info">
+                <h3>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    Next Vaccination Due
+                </h3>
+                <p id="next_vaccine_text">BCG & OPV0 Due in 5 days</p>
+            </div>
+            <button onclick="viewFullSchedule()" class="btn-secondary">
+                View Full Schedule
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </button>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Child Profile -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon blue">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                            <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                            <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                        </svg>
+                    </div>
+                    <h2 class="card-title">Child Profile</h2>
+                </div>
+                
+                <div class="profile-detail">
+                    <span class="detail-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        Full Name
+                    </span>
+                    <span class="detail-value" id="child_name">Loading...</span>
+                </div>
+                <div class="profile-detail">
+                    <span class="detail-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        Date of Birth
+                    </span>
+                    <span class="detail-value" id="child_dob">Loading...</span>
+                </div>
+                <div class="profile-detail">
+                    <span class="detail-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                        Sex
+                    </span>
+                    <span class="detail-value" id="child_sex">Loading...</span>
+                </div>
+                <div class="profile-detail">
+                    <span class="detail-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                        Nutrition
+                    </span>
+                    <span class="status-badge success" id="nutrition_status">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 12px; height: 12px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        Normal
+                    </span>
+                </div>
+                <div class="profile-detail">
+                    <span class="detail-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><path d="M12 2v20M2 12h20"></path></svg>
+                        Immunization
+                    </span>
+                    <span class="status-badge success" id="immuno_status">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 12px; height: 12px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        On Track
+                    </span>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon green">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                    </div>
+                    <h2 class="card-title">Quick Actions</h2>
+                </div>
+                
+                <div class="quick-actions-grid">
+                    <button onclick="viewImmunizationCard()" class="action-btn">
+                        <div class="action-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                            </svg>
+                        </div>
+                        <span class="action-label">Immunization Card</span>
+                    </button>
+
+                    <button onclick="viewAppointments()" class="action-btn">
+                        <div class="action-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                        </div>
+                        <span class="action-label">Appointments</span>
+                    </button>
+
+                    <button onclick="viewGrowthChart()" class="action-btn">
+                        <div class="action-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                        </div>
+                        <span class="action-label">Growth Chart</span>
+                    </button>
+
+                    <button onclick="viewVisitHistory()" class="action-btn">
+                        <div class="action-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                            </svg>
+                        </div>
+                        <span class="action-label">Visit History</span>
+                    </button>
+
+                    <button onclick="updateMyInfo()" class="action-btn">
+                        <div class="action-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </div>
+                        <span class="action-label">Update My Info</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon orange">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </div>
+                <h2 class="card-title">Recent Activity</h2>
+            </div>
+            
+            <div class="activity-list" id="activity_list">
+                <!-- Populated by JS -->
+                <div style="text-align: center; padding: 20px; color: var(--text-muted);">Loading activity...</div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Future Actions Handler (Placeholder for separate JS file) -->
+    <script src="/patient-actions.js?v=1"></script>
+
+    <script>
+        console.log('[Mother Dashboard] Page loaded');
+        
+        const supabaseClient = window.supabase.createClient(
+            'https://fmaaudmdgmgklvqcmvad.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E'
+        );
+
+        // Mock Data for Demonstration (Will be replaced by Supabase fetch in patient-actions.js)
+        const mockData = {
+            mother: {
+                name: "Josephine Mwamasage",
+                phone: "0712345678"
+            },
+            child: {
+                name: "Kaya Joram",
+                dob: "01 Nov 2026",
+                age: "1 month",
+                sex: "Female",
+                nutrition: "Normal",
+                immunization: "On Track"
+            },
+            nextVaccine: "BCG & OPV0 Due in 5 days",
+            recentActivity: [
+                {
+                    day: "02",
+                    month: "Nov",
+                    title: "Consultation",
+                    doctor: "Dr. Amina - Healthy checkup",
+                    vitals: ["Weight: 5kg", "MUAC: 200mm"]
+                },
+                {
+                    day: "01",
+                    month: "Nov",
+                    title: "Registration",
+                    doctor: "Nurse Juma - Initial intake",
+                    vitals: ["Registered in system"]
+                }
+            ]
+        };
+
+        async function initDashboard() {
+            try {
+                // In production, fetch this from Supabase based on logged-in user ID
+                // For now, we render the mock data to show the UI structure
+                
+                document.getElementById('user_name').textContent = mockData.mother.name;
+                document.getElementById('user_phone').textContent = mockData.mother.phone;
+                
+                document.getElementById('child_name').textContent = mockData.child.name;
+                document.getElementById('child_dob').textContent = `${mockData.child.dob} (${mockData.child.age})`;
+                document.getElementById('child_sex').textContent = mockData.child.sex;
+                document.getElementById('nutrition_status').innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 12px; height: 12px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    ${mockData.child.nutrition}
+                `;
+                document.getElementById('immuno_status').innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 12px; height: 12px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    ${mockData.child.immunization}
+                `;
+                
+                document.getElementById('next_vaccine_text').textContent = mockData.nextVaccine;
+
+                renderActivityList();
+
+            } catch (error) {
+                console.error('[Mother Dashboard] Init error:', error);
+            }
+        }
+
+        function renderActivityList() {
+            const listContainer = document.getElementById('activity_list');
+            
+            if (!mockData.recentActivity || mockData.recentActivity.length === 0) {
+                listContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No recent activity</div>';
+                return;
+            }
+
+            listContainer.innerHTML = mockData.recentActivity.map(activity => `
+                <div class="activity-item">
+                    <div class="activity-date">
+                        <div class="activity-day">${activity.day}</div>
+                        <div class="activity-month">${activity.month}</div>
+                    </div>
+                    <div class="activity-details" style="flex: 1;">
+                        <h4>${activity.title}</h4>
+                        <p>${activity.doctor}</p>
+                        <div class="activity-vitals">
+                            ${activity.vitals.map(vital => `<span class="vital-tag">${vital}</span>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function handleLogout() {
+            await supabaseClient.auth.signOut();
+            window.location.href = 'login.html';
+        }
+
+        // Initialize
+        initDashboard();
+    </script>
+</body>
+</html>
