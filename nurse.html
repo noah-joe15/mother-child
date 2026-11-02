@@ -22,7 +22,7 @@
             <div style="display: flex; align-items: center; gap: 16px;">
                 <div id="network_status" class="network-badge offline"><span id="network_text">OFFLINE</span></div>
                 <span id="user_info" style="font-size: 14px; font-weight: 600;">Loading...</span>
-                <button onclick="handleLogout()" class="btn-logout-small">Logout</button>
+                <button onclick="handleLogout()" style="background: transparent; border: 1px solid #e5e7eb; color: #0f172a; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'; this.style.borderColor='#ef4444'; this.style.color='#ef4444'" onmouseout="this.style.background='transparent'; this.style.borderColor='#e5e7eb'; this.style.color='#0f172a'">Logout</button>
             </div>
         </div>
     </nav>
@@ -131,18 +131,20 @@
     </main>
 
     <script>
-        const SUPABASE_URL = 'https://fmaaudmdgmgklvqcmvad.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        console.log('[Nurse] Page loaded');
+        
+        // Renamed to supabaseClient to avoid conflict with the library's global 'supabase'
+        const supabaseClient = window.supabase.createClient(
+            'https://fmaaudmdgmgklvqcmvad.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E'
+        );
         
         const db = new Dexie("MNHRCHDatabase");
         db.version(1).stores({ vitals: '++id, patient_id, synced' });
 
-        console.log('[Nurse] Page loaded');
-
         async function initNurse() {
             try {
-                const { data: { session } } = await supabase.auth.getSession();
+                const { data: { session } } = await supabaseClient.auth.getSession();
                 
                 if (!session) {
                     console.log('[Nurse] No session, redirecting to login');
@@ -150,7 +152,7 @@
                     return;
                 }
 
-                const { data: profile } = await supabase
+                const { data: profile } = await supabaseClient
                     .from('profiles')
                     .select('full_name, role')
                     .eq('id', session.user.id)
@@ -188,7 +190,7 @@
 
                 try {
                     // Register patient
-                    const { data: patient, error: pError } = await supabase
+                    const { data: patient, error: pError } = await supabaseClient
                         .from('patients')
                         .insert({
                             mother_name: document.getElementById('mother_name').value,
@@ -203,7 +205,7 @@
                     if (pError) throw pError;
 
                     // Save vitals
-                    await supabase.from('vitals').insert({
+                    await supabaseClient.from('vitals').insert({
                         patient_id: patient.id,
                         weight_kg: parseFloat(document.getElementById('weight_kg').value),
                         muac_mm: parseInt(document.getElementById('muac_mm').value),
@@ -212,7 +214,7 @@
                     });
 
                     // Add to queue
-                    await supabase.from('queue').insert({
+                    await supabaseClient.from('queue').insert({
                         patient_id: patient.id,
                         current_station: 'Doctor',
                         status: 'Waiting',
@@ -257,17 +259,17 @@
         async function loadStats() {
             const today = new Date().toISOString().split('T')[0];
             
-            const { count: regCount } = await supabase.from('patients').select('*', { count: 'exact', head: true }).gte('created_at', `${today}T00:00:00`);
+            const { count: regCount } = await supabaseClient.from('patients').select('*', { count: 'exact', head: true }).gte('created_at', `${today}T00:00:00`);
             document.getElementById('stat_registered').textContent = regCount || 0;
 
-            const { count: awaitCount } = await supabase.from('queue').select('*', { count: 'exact', head: true }).eq('current_station', 'Doctor').eq('status', 'Waiting');
+            const { count: awaitCount } = await supabaseClient.from('queue').select('*', { count: 'exact', head: true }).eq('current_station', 'Doctor').eq('status', 'Waiting');
             document.getElementById('stat_awaiting').textContent = awaitCount || 0;
 
-            const { count: compCount } = await supabase.from('queue').select('*', { count: 'exact', head: true }).eq('status', 'Completed').gte('created_at', `${today}T00:00:00`);
+            const { count: compCount } = await supabaseClient.from('queue').select('*', { count: 'exact', head: true }).eq('status', 'Completed').gte('created_at', `${today}T00:00:00`);
             document.getElementById('stat_completed').textContent = compCount || 0;
 
             // Load recent
-            const { data: recent } = await supabase.from('vitals').select('*, patients(mother_name, child_name)').order('recorded_at', { ascending: false }).limit(5);
+            const { data: recent } = await supabaseClient.from('vitals').select('*, patients(mother_name, child_name)').order('recorded_at', { ascending: false }).limit(5);
             const list = document.getElementById('recent_list');
             
             if (!recent || recent.length === 0) {
@@ -304,7 +306,8 @@
         window.addEventListener('offline', updateNetwork);
 
         async function handleLogout() {
-            await supabase.auth.signOut();
+            console.log('[Nurse] Logout initiated');
+            await supabaseClient.auth.signOut();
             window.location.href = 'login.html';
         }
 
