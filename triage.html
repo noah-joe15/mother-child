@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Triage - MNH RCH</title>
-    <link rel="stylesheet" href="/style.css">
+    
+    <!-- Cache-busting ?v=3 forces browser to download the fresh CSS -->
+    <link rel="stylesheet" href="/style.css?v=3">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Load Libraries ONLY (No inline Supabase code here to prevent conflicts) -->
+    <!-- Load External Libraries ONLY -->
     <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -138,7 +140,7 @@
 
     </main>
 
-    <!-- Load the Clinical Engine (This handles ALL the logic safely) -->
-    <script src="/triage.js"></script>
+    <!-- Cache-busting ?v=3 forces browser to download the fresh JS engine -->
+    <script src="/triage.js?v=3"></script>
 </body>
 </html>
