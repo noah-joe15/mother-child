@@ -10,66 +10,52 @@
 </head>
 <body>
 
-    <!-- NAVIGATION -->
     <nav class="navbar">
         <div class="container nav-inner">
             <a href="index.html" class="logo">
-                <div class="logo-mark">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2v20M2 12h20"/>
-                    </svg>
-                </div>
-                <div class="logo-text">
-                    MNH RCH
-                    <span>Doctor Portal</span>
-                </div>
+                <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M2 12h20"/></svg></div>
+                <div class="logo-text">MNH RCH <span>Doctor Portal</span></div>
             </a>
             <div style="display: flex; align-items: center; gap: 16px;">
-                <span id="user_info" style="font-size: 14px; font-weight: 600; color: var(--text-dark);">Loading...</span>
+                <span id="user_info" style="font-size: 14px; font-weight: 600;">Loading...</span>
                 <button onclick="handleLogout()" class="btn-logout-small">Logout</button>
             </div>
         </div>
     </nav>
 
-    <main class="container" style="padding-top: 40px; padding-bottom: 80px; max-width: 900px;">
+    <main class="container" style="padding: 40px 20px; max-width: 1000px;">
         
-        <!-- Header & Stats -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px; flex-wrap: wrap; gap: 20px;">
-            <div>
-                <h1 id="station_title" style="font-size: 28px; font-weight: 800; color: var(--text-dark); margin-bottom: 8px;">Patient Queue</h1>
-                <p style="color: var(--text-muted);">Review vitals, diagnose, and manage patient flow in real-time.</p>
-            </div>
+        <div id="loading_message" style="text-align: center; padding: 60px; color: var(--text-muted);">
+            <p>Loading doctor portal...</p>
+        </div>
+
+        <div id="doctor_content" style="display: none;">
             
-            <div style="display: flex; gap: 16px;">
-                <div class="feature-card" style="text-align: center; padding: 16px 24px; min-width: 120px;">
-                    <h3 id="waiting_count" style="font-size: 24px; margin-bottom: 4px; color: #d97706;">0</h3>
-                    <p style="text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: var(--text-light);">Waiting</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+                <div>
+                    <h1 style="font-size: 28px; font-weight: 800; margin-bottom: 8px;">Patient Queue</h1>
+                    <p style="color: var(--text-muted);">Review patients and manage care</p>
                 </div>
-                <div class="feature-card" style="text-align: center; padding: 16px 24px; min-width: 120px;">
-                    <h3 id="progress_count" style="font-size: 24px; margin-bottom: 4px; color: #2563eb;">0</h3>
-                    <p style="text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: var(--text-light);">In Progress</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Queue List -->
-        <div class="patient-card" style="padding: 32px;">
-            <h3 style="margin-bottom: 24px; display: flex; align-items: center; gap: 10px;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; color: var(--blue-accent);">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-                Active Patients
-            </h3>
-            <div id="doctor_queue_list">
-                <div style="text-align: center; padding: 40px; color: var(--text-light);">
-                    <p>Loading queue...</p>
+                <div style="display: flex; gap: 16px;">
+                    <div class="feature-card" style="text-align: center; padding: 16px 24px;">
+                        <h3 id="waiting_count" style="font-size: 32px; color: #d97706; margin: 0;">0</h3>
+                        <p style="font-size: 12px; color: var(--text-light); margin: 4px 0 0;">Waiting</p>
+                    </div>
+                    <div class="feature-card" style="text-align: center; padding: 16px 24px;">
+                        <h3 id="progress_count" style="font-size: 32px; color: #2563eb; margin: 0;">0</h3>
+                        <p style="font-size: 12px; color: var(--text-light); margin: 4px 0 0;">In Progress</p>
+                    </div>
                 </div>
             </div>
-        </div>
 
+            <div class="patient-card" style="padding: 32px;">
+                <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 24px;">Active Patients</h3>
+                <div id="queue_list">
+                    <p style="color: var(--text-muted); text-align: center; padding: 40px;">Loading queue...</p>
+                </div>
+            </div>
+
+        </div>
     </main>
 
     <script>
@@ -77,157 +63,129 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        async function initDoctorPortal() {
-            const { data: { session } } = await supabase.auth.getSession();
-            
-            if (!session) {
-                window.location.href = 'login.html';
-                return;
+        console.log('[Doctor] Page loaded');
+
+        async function initDoctor() {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                
+                if (!session) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('full_name, role')
+                    .eq('id', session.user.id)
+                    .single();
+
+                if (!profile) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                document.getElementById('user_info').textContent = `Dr. ${profile.full_name}`;
+                document.getElementById('loading_message').style.display = 'none';
+                document.getElementById('doctor_content').style.display = 'block';
+                
+                loadQueue();
+                
+                // Real-time updates
+                supabase.channel('queue_updates')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'queue' }, () => {
+                        console.log('[Doctor] Queue updated');
+                        loadQueue();
+                    })
+                    .subscribe();
+
+            } catch (error) {
+                console.error('[Doctor] Init error:', error);
             }
-
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('role, full_name')
-                .eq('id', session.user.id)
-                .single();
-
-            if (!profile || (profile.role !== 'doctor' && profile.role !== 'pharmacist' && profile.role !== 'admin')) {
-                window.location.href = 'login.html';
-                return;
-            }
-
-            document.getElementById('user_info').textContent = `Dr. ${profile.full_name}`;
-            
-            loadQueue();
-            subscribeToQueue();
         }
 
         async function loadQueue() {
-            const queueList = document.getElementById('doctor_queue_list');
-            
-            const { data, error } = await supabase
-                .from('queue')
-                .select('id, patient_id, current_station, status, created_at, patients (mother_name, child_name, vitals (weight_kg, muac_mm, temperature))')
-                .eq('current_station', 'Doctor')
-                .order('created_at', { ascending: true });
+            try {
+                const { data, error } = await supabase
+                    .from('queue')
+                    .select('*, patients(mother_name, child_name), vitals(weight_kg, muac_mm, temperature)')
+                    .eq('current_station', 'Doctor')
+                    .order('created_at', { ascending: true });
 
-            if (error) {
-                queueList.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;"><p>Failed to load queue. Please check your connection.</p></div>';
-                return;
-            }
+                if (error) throw error;
 
-            updateStats(data);
-            renderQueue(data);
-        }
-
-        function renderQueue(queueItems) {
-            const queueList = document.getElementById('doctor_queue_list');
-            
-            if (!queueItems || queueItems.length === 0) {
-                queueList.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-light);"><p>No patients currently waiting.</p></div>';
-                return;
-            }
-
-            queueList.innerHTML = queueItems.map(item => {
-                const patient = item.patients || {};
-                const vitals = patient.vitals?.[0] || {};
-                const childName = patient.child_name || 'Unknown Child';
-                const motherName = patient.mother_name || 'Unknown Mother';
-                const time = new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const waiting = data.filter(q => q.status === 'Waiting').length;
+                const progress = data.filter(q => q.status === 'In-Progress').length;
                 
-                let actionButton = '';
-                if (item.status === 'Waiting') {
-                    actionButton = `<button onclick="updateQueueStatus('${item.id}', 'In-Progress')" class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 13px;">Start Consultation</button>`;
-                } else if (item.status === 'In-Progress') {
-                    actionButton = `<button onclick="updateQueueStatus('${item.id}', 'Completed', 'Pharmacy')" class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 13px; background: #16a34a;">Send to Pharmacy</button>`;
+                document.getElementById('waiting_count').textContent = waiting;
+                document.getElementById('progress_count').textContent = progress;
+
+                const list = document.getElementById('queue_list');
+                
+                if (!data || data.length === 0) {
+                    list.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 40px;">No patients in queue</p>';
+                    return;
                 }
 
-                let statusBadge = '';
-                if (item.status === 'Waiting') {
-                    statusBadge = '<span style="display: inline-block; padding: 4px 10px; border-radius: 100px; font-size: 11px; font-weight: 700; background: #fef3c7; color: #d97706;">Waiting</span>';
-                } else if (item.status === 'In-Progress') {
-                    statusBadge = '<span style="display: inline-block; padding: 4px 10px; border-radius: 100px; font-size: 11px; font-weight: 700; background: #dbeafe; color: #2563eb;">In Progress</span>';
-                }
-
-                return `
-                    <div class="queue-item" data-id="${item.id}" style="margin-bottom: 16px; padding: 20px; background: #f8fafc; border-radius: 12px; border: 1px solid var(--border);">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                            <div>
-                                <h4 style="font-size: 16px; font-weight: 700; color: var(--text-dark); margin-bottom: 4px;">${childName}</h4>
-                                <p style="font-size: 13px; color: var(--text-muted);">Mother: ${motherName}</p>
+                list.innerHTML = data.map(q => {
+                    const patient = q.patients || {};
+                    const vitals = q.vitals?.[0] || {};
+                    const statusColor = q.status === 'Waiting' ? '#d97706' : '#2563eb';
+                    
+                    return `
+                        <div style="padding: 20px; background: #f8fafc; border-radius: 12px; margin-bottom: 16px; border-left: 4px solid ${statusColor};">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                                <div>
+                                    <h4 style="font-size: 16px; font-weight: 700; margin: 0 0 4px;">${patient.child_name || 'Unknown'}</h4>
+                                    <p style="font-size: 13px; color: var(--text-muted); margin: 0;">Mother: ${patient.mother_name || 'Unknown'}</p>
+                                </div>
+                                <span style="padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 600; background: ${statusColor}20; color: ${statusColor};">${q.status}</span>
                             </div>
-                            <div style="text-align: right;">
-                                ${statusBadge}
-                                <div style="font-size: 12px; color: var(--text-light); margin-top: 4px;">${time}</div>
+                            
+                            ${vitals.weight_kg ? `
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 12px; background: white; border-radius: 8px; margin-bottom: 12px;">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 11px; color: var(--text-light);">Weight</div>
+                                    <div style="font-size: 16px; font-weight: 700;">${vitals.weight_kg} kg</div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 11px; color: var(--text-light);">MUAC</div>
+                                    <div style="font-size: 16px; font-weight: 700; color: ${vitals.muac_mm < 115 ? '#ef4444' : vitals.muac_mm < 125 ? '#d97706' : '#16a34a'}">${vitals.muac_mm} mm</div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 11px; color: var(--text-light);">Temp</div>
+                                    <div style="font-size: 16px; font-weight: 700;">${vitals.temperature}°C</div>
+                                </div>
+                            </div>
+                            ` : ''}
+                            
+                            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                ${q.status === 'Waiting' ? `
+                                    <button onclick="updateStatus('${q.id}', 'In-Progress')" class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 13px;">Start Consultation</button>
+                                ` : `
+                                    <button onclick="updateStatus('${q.id}', 'Completed', 'Pharmacy')" class="btn-primary" style="width: auto; padding: 8px 16px; font-size: 13px; background: #16a34a;">Send to Pharmacy</button>
+                                `}
                             </div>
                         </div>
-                        
-                        ${vitals.weight_kg ? `
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 12px; background: white; border-radius: 8px; margin-bottom: 12px;">
-                            <div style="text-align: center;">
-                                <div style="font-size: 11px; color: var(--text-light); text-transform: uppercase;">Weight</div>
-                                <div style="font-size: 16px; font-weight: 700; color: var(--text-dark);">${vitals.weight_kg} kg</div>
-                            </div>
-                            <div style="text-align: center;">
-                                <div style="font-size: 11px; color: var(--text-light); text-transform: uppercase;">MUAC</div>
-                                <div style="font-size: 16px; font-weight: 700; color: ${vitals.muac_mm < 115 ? '#ef4444' : vitals.muac_mm < 125 ? '#d97706' : '#16a34a'}">${vitals.muac_mm} mm</div>
-                            </div>
-                            <div style="text-align: center;">
-                                <div style="font-size: 11px; color: var(--text-light); text-transform: uppercase;">Temp</div>
-                                <div style="font-size: 16px; font-weight: 700; color: var(--text-dark);">${vitals.temperature}°C</div>
-                            </div>
-                        </div>
-                        ` : ''}
-                        
-                        <div style="display: flex; justify-content: flex-end;">
-                            ${actionButton}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
+                    `;
+                }).join('');
 
-        function updateStats(queueItems) {
-            const waiting = queueItems.filter(item => item.status === 'Waiting').length;
-            const inProgress = queueItems.filter(item => item.status === 'In-Progress').length;
-            
-            document.getElementById('waiting_count').textContent = waiting;
-            document.getElementById('progress_count').textContent = inProgress;
-        }
-
-        async function updateQueueStatus(queueId, newStatus, nextStation = null) {
-            const updateData = {
-                status: newStatus,
-                updated_at: new Date().toISOString()
-            };
-
-            if (nextStation) {
-                updateData.current_station = nextStation;
+            } catch (error) {
+                console.error('[Doctor] Load error:', error);
             }
+        }
 
-            const { error } = await supabase
-                .from('queue')
-                .update(updateData)
-                .eq('id', queueId);
-
-            if (error) {
-                alert('Failed to update patient status. Please try again.');
-            } else {
+        async function updateStatus(queueId, newStatus, nextStation = null) {
+            try {
+                const updateData = { status: newStatus, updated_at: new Date().toISOString() };
+                if (nextStation) updateData.current_station = nextStation;
+                
+                await supabase.from('queue').update(updateData).eq('id', queueId);
                 loadQueue();
+            } catch (error) {
+                console.error('[Doctor] Update error:', error);
+                alert('Failed to update status');
             }
-        }
-
-        function subscribeToQueue() {
-            supabase
-                .channel('doctor_queue_changes')
-                .on('postgres_changes', 
-                    { event: '*', schema: 'public', table: 'queue' }, 
-                    (payload) => {
-                        console.log('Queue update:', payload);
-                        loadQueue();
-                    }
-                )
-                .subscribe();
         }
 
         async function handleLogout() {
@@ -235,8 +193,7 @@
             window.location.href = 'login.html';
         }
 
-        // Initialize
-        initDoctorPortal();
+        initDoctor();
     </script>
 </body>
 </html>
