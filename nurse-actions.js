@@ -1,6 +1,6 @@
 /**
  * MNH RCH - Nurse Actions & Station Logic
- * Handles stats, registration, search, and full patient records.
+ * Handles smart mother lookup, registration modes, stats, search, records.
  * Wrapped in IIFE to prevent duplicate-declaration crashes.
  */
 (function () {
@@ -21,9 +21,11 @@
     var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E';
     var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Offline cache (Dexie) for future offline sync
     var db = new Dexie("MNHRCHDatabase");
     db.version(1).stores({ vitals: '++id, patient_id, synced' });
+
+    // Lookup state machine
+    var lookup = { mode: 'new', rows: [], selectedId: null };
 
     // ==========================================
     // 2. HELPERS
@@ -66,6 +68,31 @@
         if (val < 115) return { text: 'Severe', color: '#ef4444' };
         if (val < 125) return { text: 'Moderate', color: '#d97706' };
         return { text: 'Healthy', color: '#16a34a' };
+    }
+
+    // Generate phone variants so 0712..., 255712..., +255712... all match
+    function phoneVariants(input) {
+        var raw = String(input || '').trim();
+        var digits = raw.replace(/\D/g, '');
+        var set = {};
+        function add(v) { if (v) set[v] = 1; }
+        add(raw);
+        add(digits);
+        if (digits.length === 12 && digits.indexOf('255') === 0) {
+            add('0' + digits.slice(3));
+            add('255' + digits.slice(3));
+            add('+255' + digits.slice(3));
+        }
+        if (digits.length === 10 && digits.charAt(0) === '0') {
+            add('255' + digits.slice(1));
+            add('+255' + digits.slice(1));
+        }
+        if (digits.length === 9 && (digits.charAt(0) === '6' || digits.charAt(0) === '7')) {
+            add('0' + digits);
+            add('255' + digits);
+            add('+255' + digits);
+        }
+        return Object.keys(set);
     }
 
     // ==========================================
@@ -117,7 +144,7 @@
     }
 
     // ==========================================
-    // 4. FULL PATIENT RECORD (tap from search/recent)
+    // 4. FULL PATIENT RECORD
     // ==========================================
     window.openPatientRecord = async function (id) {
         try {
@@ -133,7 +160,6 @@
 
             var html = '';
 
-            // Mother section
             html += sectionTitle('Mother Information');
             html += row('Full Name', esc(p.mother_name));
             html += row('Phone Number', esc(p.phone_number));
@@ -142,7 +168,6 @@
             if (p.sha_number) html += row('SHA Number', esc(p.sha_number));
             html += row('Registered', formatDate(p.created_at));
 
-            // Child section
             html += sectionTitle('Child Information');
             if (p.child_name) {
                 html += row('Full Name', esc(p.child_name));
@@ -152,7 +177,6 @@
                 html += '<div style="background:#fef3c7;border:1px solid #fcd34d;color:#92400e;padding:12px;border-radius:8px;font-size:13px;font-weight:600;">Antenatal registration - child not yet born or not yet recorded.</div>';
             }
 
-            // Vitals history
             html += sectionTitle('Vitals History');
             if (vitals.length === 0) {
                 html += '<p style="color:#64748b;font-size:13px;font-style:italic;margin:4px 0;">No vitals recorded yet.</p>';
@@ -173,7 +197,6 @@
                 });
             }
 
-            // Visit history
             html += sectionTitle('Clinic Visit History');
             if (visits.length === 0) {
                 html += '<p style="color:#64748b;font-size:13px;font-style:italic;margin:4px 0;">No clinic visits recorded yet.</p>';
@@ -196,7 +219,249 @@
     };
 
     // ==========================================
-    // 5. SEARCH
+    // 5. SMART MOTHER LOOKUP
+    // ==========================================
+    function setBanner(cls, html) {
+        var box = document.getElementById('mother_lookup_status');
+        box.className = 'lookup-banner' + (cls ? ' ' + cls : '');
+        box.innerHTML = html || '';
+    }
+
+    function setMotherFieldsEditable(editable, rowData) {
+        var m = document.getElementById('mother_name');
+        var p = document.getElementById('phone_number');
+        m.readOnly = !editable;
+        p.readOnly = !editable;
+        if (rowData) {
+            m.value = rowData.mother_name || '';
+            p.value = rowData.phone_number || '';
+        }
+    }
+
+    function setChildFieldsLocked(locked, prefill) {
+        var n = document.getElementById('child_name');
+        var d = document.getElementById('child_dob');
+        var s = document.getElementById('child_sex');
+        n.readOnly = locked;
+        d.readOnly = locked;
+        s.disabled = locked;
+        if (prefill) {
+            n.value = prefill.child_name || '';
+            d.value = prefill.child_dob || '';
+            s.value = prefill.child_sex || '';
+        } else if (locked) {
+            n.value = '';
+            d.value = '';
+            s.value = '';
+        }
+    }
+
+    function setSubmitLabel(text) {
+        var btn = document.getElementById('submit_btn');
+        btn.innerHTML = '<span style="display: flex; align-items: center; justify-content: center; gap: 10px;">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>' +
+            esc(text) + '</span>';
+    }
+
+    function updateSubmitLabel() {
+        var t = 'Register Patient & Send to Queue';
+        if (lookup.mode === 'new_child_existing_mother') t = 'Register New Child & Send to Queue';
+        else if (lookup.mode === 'visit_child') t = 'Record Vitals & Send to Queue';
+        else if (lookup.mode === 'unborn_add_child') t = 'Add Child Details & Send to Queue';
+        else if (lookup.mode === 'unborn_prenatal') t = 'Send Antenatal Visit to Queue';
+        setSubmitLabel(t);
+        document.getElementById('form_mode').value = lookup.mode;
+        document.getElementById('selected_patient_id').value = lookup.selectedId || '';
+    }
+
+    function renderChildPanel() {
+        var panel = document.getElementById('child_panel');
+        var withChild = lookup.rows.filter(function (r) { return r.child_name; });
+        var unborn = lookup.rows.filter(function (r) { return !r.child_name; });
+
+        if (lookup.mode === 'new') {
+            panel.innerHTML = '';
+            setChildFieldsLocked(false);
+            return;
+        }
+
+        if (lookup.mode === 'visit_child' || lookup.mode === 'new_child_existing_mother') {
+            var html = '<div class="panel-title">Children on record - select who this visit is for</div>';
+            html += withChild.map(function (c) {
+                var sel = (lookup.mode === 'visit_child' && lookup.selectedId === c.id);
+                return '<div class="child-select-card' + (sel ? ' selected' : '') + '" onclick="selectChild(\'' + c.id + '\')">' +
+                    '<input type="radio" name="child_pick" ' + (sel ? 'checked' : '') + '>' +
+                    '<span><span class="cs-name">' + esc(c.child_name) + '</span><br>' +
+                    '<span class="cs-meta">Born ' + formatDate(c.child_dob) + (c.child_dob ? ' (' + calculateAge(c.child_dob) + ')' : '') + ' &middot; ' + esc(c.child_sex || 'Sex not recorded') + '</span></span>' +
+                '</div>';
+            }).join('');
+            var selNew = (lookup.mode === 'new_child_existing_mother');
+            html += '<div class="child-select-card' + (selNew ? ' selected' : '') + '" onclick="selectNewChild()">' +
+                '<input type="radio" name="child_pick" ' + (selNew ? 'checked' : '') + '>' +
+                '<span><span class="cs-name">Register a new child for this mother</span><br>' +
+                '<span class="cs-meta">Creates a new care record using her existing details</span></span>' +
+            '</div>';
+            panel.innerHTML = html;
+
+            if (lookup.mode === 'visit_child') {
+                var picked = withChild.filter(function (r) { return r.id === lookup.selectedId; })[0];
+                setChildFieldsLocked(true, picked);
+            } else {
+                setChildFieldsLocked(false);
+            }
+            return;
+        }
+
+        if (lookup.mode === 'unborn' || lookup.mode === 'unborn_add_child' || lookup.mode === 'unborn_prenatal') {
+            var bornActive = (lookup.mode === 'unborn_add_child');
+            var prenActive = (lookup.mode === 'unborn_prenatal');
+            panel.innerHTML = '<div class="panel-title">Baby status - choose one</div>' +
+                '<div class="unborn-choice">' +
+                    '<button type="button" class="' + (bornActive ? 'active' : '') + '" onclick="chooseUnborn(\'born\')">Baby is born now - add child details</button>' +
+                    '<button type="button" class="' + (prenActive ? 'active' : '') + '" onclick="chooseUnborn(\'prenatal\')">Still pregnant - antenatal visit</button>' +
+                '</div>';
+            if (lookup.mode === 'unborn_add_child') setChildFieldsLocked(false);
+            else setChildFieldsLocked(true);
+            return;
+        }
+    }
+
+    function softResetLookup() {
+        lookup.mode = 'new';
+        lookup.rows = [];
+        lookup.selectedId = null;
+        setMotherFieldsEditable(true);
+        setChildFieldsLocked(false);
+        document.getElementById('child_panel').innerHTML = '';
+        updateSubmitLabel();
+    }
+
+    window.startNewPatient = function () {
+        softResetLookup();
+        document.getElementById('mother_name').value = '';
+        document.getElementById('phone_number').value = '';
+        document.getElementById('child_name').value = '';
+        document.getElementById('child_dob').value = '';
+        document.getElementById('child_sex').value = '';
+        setBanner('notfound', 'Started a new patient entry. Type the phone number and press Check (or tap outside the field) to verify against the system.');
+        document.getElementById('phone_number').focus();
+    };
+
+    window.triggerLookup = async function () {
+        var phone = document.getElementById('phone_number').value.trim();
+
+        softResetLookup();
+
+        if (phone.replace(/\D/g, '').length < 9) {
+            setBanner('notfound', 'Enter a full phone number (at least 9 digits) to check the system.');
+            return;
+        }
+
+        setBanner('notfound', 'Checking system for ' + esc(phone) + '...');
+
+        try {
+            var variants = phoneVariants(phone);
+            var res = await sb.from('patients')
+                .select('*')
+                .in('phone_number', variants)
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            if (res.error) throw res.error;
+
+            if (!res.data || res.data.length === 0) {
+                lookup.mode = 'new';
+                setBanner('notfound',
+                    'No record found for <strong>' + esc(phone) + '</strong>. This user is NOT registered in the system. Completing this form will create a NEW registration.' +
+                    '<button type="button" class="recheck" onclick="triggerLookup()">Re-check</button>');
+                setMotherFieldsEditable(true);
+                renderChildPanel();
+                updateSubmitLabel();
+                return;
+            }
+
+            lookup.rows = res.data;
+            var mother = res.data[0];
+            setMotherFieldsEditable(false, mother);
+
+            var withChild = res.data.filter(function (r) { return r.child_name; });
+            var unborn = res.data.filter(function (r) { return !r.child_name; });
+
+            if (withChild.length > 0) {
+                lookup.mode = 'visit_child';
+                lookup.selectedId = withChild[0].id;
+                setBanner('found',
+                    'Mother found: <strong>' + esc(mother.mother_name) + '</strong> &middot; registered ' + formatDate(mother.created_at) + '. Select the child for this visit below.' +
+                    '<button type="button" class="recheck" onclick="triggerLookup()">Re-check</button>' +
+                    '<button type="button" class="recheck" onclick="startNewPatient()">Start new patient</button>');
+            } else {
+                lookup.mode = 'unborn';
+                lookup.selectedId = unborn[0].id;
+                setBanner('unborn',
+                    'Mother found: <strong>' + esc(mother.mother_name) + '</strong>. Baby status: UNBORN (antenatal record from ' + formatDate(unborn[0].created_at) + '). Choose the baby status below.' +
+                    '<button type="button" class="recheck" onclick="triggerLookup()">Re-check</button>' +
+                    '<button type="button" class="recheck" onclick="startNewPatient()">Start new patient</button>');
+            }
+
+            renderChildPanel();
+            updateSubmitLabel();
+
+        } catch (err) {
+            console.error('[Nurse] Lookup error:', err);
+            lookup.mode = 'new';
+            setBanner('error', 'Could not verify this phone number: ' + esc(err.message) +
+                '<button type="button" class="recheck" onclick="triggerLookup()">Re-check</button>');
+            updateSubmitLabel();
+        }
+    };
+
+    window.selectChild = function (id) {
+        lookup.mode = 'visit_child';
+        lookup.selectedId = id;
+        renderChildPanel();
+        updateSubmitLabel();
+    };
+
+    window.selectNewChild = function () {
+        lookup.mode = 'new_child_existing_mother';
+        lookup.selectedId = null;
+        renderChildPanel();
+        updateSubmitLabel();
+    };
+
+    window.chooseUnborn = function (opt) {
+        var unborn = lookup.rows.filter(function (r) { return !r.child_name; });
+        if (!unborn.length) return;
+        if (opt === 'born') {
+            lookup.mode = 'unborn_add_child';
+        } else {
+            lookup.mode = 'unborn_prenatal';
+        }
+        lookup.selectedId = unborn[0].id;
+        renderChildPanel();
+        updateSubmitLabel();
+    };
+
+    function setupLookup() {
+        var phoneInput = document.getElementById('phone_number');
+        document.getElementById('check_phone_btn').addEventListener('click', function () {
+            window.triggerLookup();
+        });
+        phoneInput.addEventListener('blur', function () {
+            if (phoneInput.readOnly) return;
+            if (phoneInput.value.trim() === '') return;
+            window.triggerLookup();
+        });
+        phoneInput.addEventListener('input', function () {
+            if (lookup.rows.length > 0) {
+                softResetLookup();
+                setBanner('notfound', 'Phone changed. Press Check (or tap outside the field) to verify the new number.');
+            }
+        });
+    }
+
+    // ==========================================
+    // 6. SEARCH
     // ==========================================
     function setupSearch() {
         var input = document.getElementById('search_input');
@@ -241,7 +506,7 @@
     }
 
     // ==========================================
-    // 6. STATS (system-wide mothers & babies)
+    // 7. STATS
     // ==========================================
     async function loadStats() {
         var today = new Date().toISOString().split('T')[0];
@@ -262,13 +527,13 @@
     }
 
     // ==========================================
-    // 7. RECENT PATIENTS (tappable)
+    // 8. RECENT PATIENTS (scroll shelf, 12 rows)
     // ==========================================
     async function loadRecent() {
         var res = await sb.from('patients')
             .select('id, mother_name, child_name, phone_number, created_at')
             .order('created_at', { ascending: false })
-            .limit(6);
+            .limit(12);
 
         var list = document.getElementById('recent_list');
         if (res.error || !res.data || res.data.length === 0) {
@@ -292,12 +557,17 @@
     }
 
     // ==========================================
-    // 8. REGISTRATION FORM
+    // 9. FORM SUBMIT (mode-aware)
     // ==========================================
     function setupForm() {
         document.getElementById('nurse_form').addEventListener('submit', async function (e) {
             e.preventDefault();
-            console.log('[Nurse] Form submitted');
+            console.log('[Nurse] Form submitted in mode:', lookup.mode);
+
+            if (lookup.mode === 'unborn') {
+                alert('Please choose the baby status first: "Baby is born now" or "Still pregnant".');
+                return;
+            }
 
             var btn = document.getElementById('submit_btn');
             var originalContent = btn.innerHTML;
@@ -307,24 +577,76 @@
             try {
                 var childName = document.getElementById('child_name').value.trim();
                 var childDob = document.getElementById('child_dob').value;
+                var childSex = document.getElementById('child_sex').value;
                 var weight = document.getElementById('weight_kg').value;
                 var muac = document.getElementById('muac_mm').value;
                 var temp = document.getElementById('temperature').value;
 
-                var pRes = await sb.from('patients').insert({
-                    mother_name: document.getElementById('mother_name').value,
-                    phone_number: document.getElementById('phone_number').value,
-                    child_name: childName === '' ? null : childName,
-                    child_dob: childDob === '' ? null : childDob,
-                    created_at: new Date().toISOString()
-                }).select().single();
+                if ((lookup.mode === 'new_child_existing_mother' || lookup.mode === 'unborn_add_child') && childName === '') {
+                    alert('Child name is required for this action.');
+                    btn.innerHTML = originalContent;
+                    btn.disabled = false;
+                    return;
+                }
 
-                if (pRes.error) throw pRes.error;
+                var patientId = null;
+                var successMsg = '';
 
-                // Vitals only when weight is provided (antenatal visits skip vitals)
+                if (lookup.mode === 'new') {
+                    var ins = await sb.from('patients').insert({
+                        mother_name: document.getElementById('mother_name').value,
+                        phone_number: document.getElementById('phone_number').value.trim(),
+                        child_name: childName === '' ? null : childName,
+                        child_dob: childDob === '' ? null : childDob,
+                        child_sex: childSex === '' ? null : childSex,
+                        created_at: new Date().toISOString()
+                    }).select().single();
+                    if (ins.error) throw ins.error;
+                    patientId = ins.data.id;
+                    successMsg = 'New patient registered and sent to the doctor queue.';
+
+                } else if (lookup.mode === 'new_child_existing_mother') {
+                    var base = lookup.rows[0];
+                    var ins2 = await sb.from('patients').insert({
+                        mother_name: base.mother_name,
+                        phone_number: base.phone_number,
+                        mother_age: base.mother_age || null,
+                        sha_number: base.sha_number || null,
+                        residence: base.residence || null,
+                        child_name: childName,
+                        child_dob: childDob === '' ? null : childDob,
+                        child_sex: childSex === '' ? null : childSex,
+                        created_at: new Date().toISOString()
+                    }).select().single();
+                    if (ins2.error) throw ins2.error;
+                    patientId = ins2.data.id;
+                    successMsg = 'New child record created for ' + base.mother_name + ' and sent to the queue.';
+
+                } else if (lookup.mode === 'visit_child') {
+                    patientId = lookup.selectedId;
+                    successMsg = 'Vitals recorded and existing patient sent to the doctor queue.';
+
+                } else if (lookup.mode === 'unborn_add_child') {
+                    patientId = lookup.selectedId;
+                    var upd = await sb.from('patients').update({
+                        child_name: childName,
+                        child_dob: childDob === '' ? null : childDob,
+                        child_sex: childSex === '' ? null : childSex,
+                        updated_at: new Date().toISOString()
+                    }).eq('id', patientId);
+                    if (upd.error) throw upd.error;
+                    successMsg = 'Child details added to the antenatal record and sent to the queue.';
+
+                } else if (lookup.mode === 'unborn_prenatal') {
+                    patientId = lookup.selectedId;
+                    successMsg = 'Antenatal visit sent to the doctor queue.';
+                }
+
+                if (!patientId) throw new Error('No patient selected. Run the phone check again.');
+
                 if (weight !== '') {
                     await sb.from('vitals').insert({
-                        patient_id: pRes.data.id,
+                        patient_id: patientId,
                         weight_kg: parseFloat(weight),
                         muac_mm: muac === '' ? null : parseInt(muac, 10),
                         temperature: temp === '' ? null : parseFloat(temp),
@@ -333,7 +655,7 @@
                 }
 
                 await sb.from('queue').insert({
-                    patient_id: pRes.data.id,
+                    patient_id: patientId,
                     current_station: 'Doctor',
                     status: 'Waiting',
                     created_at: new Date().toISOString()
@@ -343,12 +665,15 @@
                 btn.style.background = 'linear-gradient(135deg, #16a34a, #22c55e)';
 
                 setTimeout(function () {
-                    alert('Patient registered successfully and sent to doctor\'s queue!');
+                    alert(successMsg);
                     document.getElementById('nurse_form').reset();
                     resetNutritionBox();
+                    softResetLookup();
+                    setBanner('', '');
                     btn.innerHTML = originalContent;
                     btn.style.background = '';
                     btn.disabled = false;
+                    updateSubmitLabel();
                     loadStats();
                     loadRecent();
                 }, 500);
@@ -363,7 +688,7 @@
     }
 
     // ==========================================
-    // 9. MUAC CHECKER
+    // 10. MUAC CHECKER
     // ==========================================
     function resetNutritionBox() {
         var box = document.getElementById('nutrition_status');
@@ -390,7 +715,7 @@
     };
 
     // ==========================================
-    // 10. NETWORK + LOGOUT
+    // 11. NETWORK + LOGOUT
     // ==========================================
     function updateNetwork() {
         var badge = document.getElementById('network_status');
@@ -411,7 +736,7 @@
     };
 
     // ==========================================
-    // 11. INIT
+    // 12. INIT
     // ==========================================
     async function initNurse() {
         try {
@@ -438,7 +763,9 @@
             loadRecent();
             setupForm();
             setupSearch();
+            setupLookup();
             updateNetwork();
+            updateSubmitLabel();
 
         } catch (error) {
             console.error('[Nurse] Init error:', error);
@@ -449,7 +776,6 @@
     window.addEventListener('online', updateNetwork);
     window.addEventListener('offline', updateNetwork);
 
-    // Spin animation for loading button
     var spinStyle = document.createElement('style');
     spinStyle.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
     document.head.appendChild(spinStyle);
