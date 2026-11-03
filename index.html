@@ -2,9 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MNH RCH">
+    <link rel="manifest" href="/manifest.json">
     <title>MNH RCH Official National E-Clinic Tracking Card</title>
-    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/style.css?v=7">
+    <link rel="stylesheet" href="/responsive.css?v=1">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -51,17 +57,17 @@
             <p>A secure, digital continuation of Tanzania's trusted Kadi ya Kliniki. Every vaccination, every check-up, every milestone — preserved, protected, and accessible, even without an internet connection.</p>
 
             <div class="hero-buttons">
-    <a href="services.html" class="btn btn-primary">
-    View Services
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; margin-left: 8px;">
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-        <polyline points="12 5 19 12 12 19"></polyline>
-    </svg>
-</a>
-    <a href="learn.html" class="btn btn-secondary">
-        Learn More
-    </a>
-</div>
+                <a href="services.html" class="btn btn-primary">
+                    View Services
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; margin-left: 8px;">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </a>
+                <a href="learn.html" class="btn btn-secondary">
+                    Learn More
+                </a>
+            </div>
         </div>
     </section>
 
@@ -134,7 +140,7 @@
                 </div>
             </div>
             <div style="text-align: center; margin-top: 32px;">
-               <a href="register.html" class="btn btn-primary">
+                <a href="register.html" class="btn btn-primary">
                     Register Now
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -158,5 +164,6 @@
             label.textContent = label.textContent === 'EN / SW' ? 'SW / EN' : 'EN / SW';
         }
     </script>
+    <script src="/mega-brain.js?v=1"></script>
 </body>
 </html>
