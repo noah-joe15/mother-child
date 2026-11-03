@@ -7,13 +7,44 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="MNH RCH">
+    <meta name="format-detection" content="telephone=no">
     <link rel="manifest" href="/manifest.json">
     <title>MNH RCH Official National E-Clinic Tracking Card</title>
+
+    <!-- Reduce handshake round trips on flaky mobile networks -->
+    <link rel="preconnect" href="https://fmaaudmdgmgklvqcmvad.supabase.co" crossorigin>
+    <link rel="dns-prefetch" href="https://fmaaudmdgmgklvqcmvad.supabase.co">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
     <link rel="stylesheet" href="/style.css?v=7">
     <link rel="stylesheet" href="/responsive.css?v=1">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
+
+    <!-- Safari resilience check: runs before anything else, ES5-safe for old iOS -->
+    <script>
+        (function () {
+            window.__MNH_STORAGE_OK = (function () {
+                try {
+                    localStorage.setItem('__mnh_test', '1');
+                    localStorage.removeItem('__mnh_test');
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            })();
+
+            document.addEventListener('DOMContentLoaded', function () {
+                if (window.__MNH_STORAGE_OK) return;
+                var d = document.createElement('div');
+                d.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fef3c7;color:#92400e;padding:10px 16px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,.15);font-family:Inter,sans-serif;';
+                d.textContent = 'Safari Private Browsing is ON. This app cannot save your login. Tap the tabs icon, turn off Private, then reload this page.';
+                document.body.appendChild(d);
+            });
+        })();
+    </script>
 
     <!-- NAVIGATION -->
     <nav class="navbar">
@@ -154,10 +185,31 @@
         </div>
     </section>
 
+    <!-- iPhone Help Card (hidden by default) -->
+    <section class="container" id="iphone_help" style="display: none; margin-bottom: 40px;">
+        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 24px; box-shadow: 0 4px 12px rgba(30,58,138,0.08);">
+            <h3 style="margin: 0 0 12px 0; font-size: 18px; font-weight: 700; color: #0f172a;">iPhone or Safari will not open this page? Follow these steps in order:</h3>
+            <ol style="margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.8;">
+                <li><strong>Switch network.</strong> If you are on Wi-Fi, switch to mobile data (or vice versa) and reload. This is the most common fix.</li>
+                <li><strong>Turn off Private Relay.</strong> Settings → tap your name at the top → iCloud → Private Relay → Off.</li>
+                <li><strong>Turn off Private Browsing in Safari.</strong> Open Safari, tap the tabs icon at the bottom, tap "Private", then tap "Done" to return to normal tabs.</li>
+                <li><strong>Disable experimental QUIC.</strong> Settings → Safari → Advanced → Experimental Features → switch OFF anything named HTTP/3 or QUIC.</li>
+                <li><strong>Update iOS.</strong> Settings → General → Software Update. Install any available update, then retry.</li>
+                <li><strong>Try Chrome or Firefox on the iPhone</strong> from the App Store as a temporary alternative.</li>
+            </ol>
+            <p style="margin: 12px 0 0 0; font-size: 13px; color: #64748b;">If none of the above works, your network path to our hosting provider is blocked. Contact the clinic desk for the alternative access link.</p>
+        </div>
+    </section>
+
     <!-- FOOTER -->
     <footer class="footer">
         <div class="container">
             <p>Built with pride in Tanzania · <strong>MNH RCH E-Clinic</strong> · Aligned with Dira ya Taifa 2050</p>
+            <p style="margin-top: 8px;">
+                <button onclick="toggleIphoneHelp()" style="background: none; border: none; color: #2563eb; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: underline; font-family: inherit;">
+                    iPhone or Safari opening problems? Tap here for fix steps
+                </button>
+            </p>
         </div>
     </footer>
 
@@ -167,9 +219,19 @@
             label.textContent = label.textContent === 'EN / SW' ? 'SW / EN' : 'EN / SW';
         }
 
+        function toggleIphoneHelp() {
+            var card = document.getElementById('iphone_help');
+            var showing = card.style.display === 'block';
+            card.style.display = showing ? 'none' : 'block';
+            if (!showing) {
+                try { card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) { card.scrollIntoView(); }
+            }
+        }
+
         // Smart CTA: if a mother session exists, swap buttons to Dashboard + Logout
         (function () {
-            var phone = localStorage.getItem('mnh_user_phone');
+            var phone = null;
+            try { phone = localStorage.getItem('mnh_user_phone'); } catch (e) { phone = null; }
             if (!phone) return;
 
             var wrap = document.getElementById('cta_buttons');
@@ -185,6 +247,16 @@
                     'Logout' +
                 '</button>';
         })();
+
+        // Service worker: after the first successful visit, the app shell
+        // opens from cache even if the network connection drops mid-handshake.
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/sw.js').catch(function (err) {
+                    console.warn('[SW] registration failed:', err);
+                });
+            });
+        }
     </script>
     <script src="/mega-brain.js?v=1"></script>
 </body>
