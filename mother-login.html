@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mother Login - MNH RCH</title>
+    <link rel="stylesheet" href="/style.css?v=4">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        #login_form .form-group {
+            margin-bottom: 20px;
+        }
+
+        #login_form label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+        }
+
+        #login_form input[type="tel"] {
+            width: 100%;
+            padding: 14px 16px 14px 46px;
+            font-size: 16px;
+            color: var(--text-dark);
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
+        }
+
+        #login_form input[type="tel"]::placeholder {
+            color: #94a3b8;
+            font-size: 15px;
+        }
+
+        #login_form input[type="tel"]:focus {
+            border-color: var(--blue-accent);
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .phone-wrap {
+            position: relative;
+        }
+
+        .phone-wrap svg {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: #94a3b8;
+            pointer-events: none;
+        }
+
+        .remember-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 4px 0 24px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .remember-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--blue-accent);
+            cursor: pointer;
+        }
+
+        .remember-row span {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .login-error {
+            display: none;
+            margin-top: 20px;
+            padding: 16px;
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            border-radius: 12px;
+            color: #991b1b;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .login-error a {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: #1e3a8a;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .alt-links {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .alt-links a {
+            color: var(--blue-accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .staff-link {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        .staff-link a {
+            color: var(--text-light);
+            text-decoration: underline;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container nav-inner">
+            <a href="index.html" class="back-link" style="margin: 0;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                Back to Home
+            </a>
+            <div class="logo-text" style="font-size: 16px;">
+                MNH RCH
+                <span style="font-size: 11px;">Mother Login</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container" style="padding-top: 40px; padding-bottom: 80px; max-width: 520px;">
+
+        <div style="text-align: center; margin-bottom: 32px;">
+            <div class="badge" style="margin-bottom: 16px; display: inline-flex;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <span>Secure Mother Portal Access</span>
+            </div>
+            <h1 style="font-size: 30px; font-weight: 800; color: var(--text-dark); margin-bottom: 12px; letter-spacing: -0.02em;">Welcome Back</h1>
+            <p style="font-size: 15px; color: var(--text-muted); max-width: 420px; margin: 0 auto; line-height: 1.6;">Login with the phone number you used during registration to access your child's health record.</p>
+        </div>
+
+        <form id="login_form" class="patient-card" style="padding: 36px; border-radius: 16px;">
+
+            <div class="form-group">
+                <label for="login_phone">Phone Number</label>
+                <div class="phone-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
+                    <input type="tel" id="login_phone" inputmode="tel" autocomplete="tel" required placeholder="e.g., 0712345678">
+                </div>
+            </div>
+
+            <label class="remember-row">
+                <input type="checkbox" id="remember_phone">
+                <span>Remember my phone on this device</span>
+            </label>
+
+            <button type="submit" id="login_btn" class="btn-primary" style="width: 100%; padding: 14px 28px; font-size: 15px; font-weight: 600; border-radius: 100px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                    <polyline points="10 17 15 12 10 7"></polyline>
+                    <line x1="15" y1="12" x2="3" y2="12"></line>
+                </svg>
+                Login to My Dashboard
+            </button>
+
+            <div id="login_error" class="login-error"></div>
+        </form>
+
+        <p class="alt-links">New to MNH RCH? <a href="register.html">Register your family</a></p>
+        <p class="staff-link">Clinic staff (nurse, doctor, admin)? <a href="login.html">Use Staff Login</a></p>
+
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>Built with pride in Tanzania · <strong>MNH RCH E-Clinic</strong> · Aligned with Dira ya Taifa 2050</p>
+        </div>
+    </footer>
+
+    <script>
+        (function () {
+            var SUPABASE_URL = 'https://fmaaudmdgmgklvqcmvad.supabase.co';
+            var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E';
+            var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+            var phoneInput = document.getElementById('login_phone');
+            var rememberBox = document.getElementById('remember_phone');
+            var errorBox = document.getElementById('login_error');
+
+            // Prefill: URL param wins, then remembered phone
+            var urlPhone = new URLSearchParams(window.location.search).get('phone');
+            var remembered = localStorage.getItem('mnh_remember_phone');
+            if (urlPhone) {
+                phoneInput.value = urlPhone;
+            } else if (remembered) {
+                phoneInput.value = remembered;
+                rememberBox.checked = true;
+            }
+
+            function showError(message, withRegisterLink) {
+                errorBox.style.display = 'block';
+                errorBox.innerHTML = message + (withRegisterLink
+                    ? '<br><a href="register.html">Register Now</a>'
+                    : '');
+            }
+
+            document.getElementById('login_form').addEventListener('submit', async function (e) {
+                e.preventDefault();
+                errorBox.style.display = 'none';
+
+                var phone = phoneInput.value.trim();
+                if (!phone) {
+                    showError('Please enter your phone number.', false);
+                    return;
+                }
+
+                var btn = document.getElementById('login_btn');
+                var originalHTML = btn.innerHTML;
+                btn.innerHTML = 'Checking...';
+                btn.disabled = true;
+
+                try {
+                    var res = await supabaseClient
+                        .from('patients')
+                        .select('id, mother_name, phone_number')
+                        .eq('phone_number', phone)
+                        .order('created_at', { ascending: false })
+                        .limit(1);
+
+                    if (res.error) throw res.error;
+
+                    if (!res.data || res.data.length === 0) {
+                        showError('This phone number is not registered. Please register first.', true);
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                        return;
+                    }
+
+                    // Success: establish session
+                    localStorage.setItem('mnh_user_phone', phone);
+                    localStorage.setItem('mnh_user_name', res.data[0].mother_name);
+
+                    if (rememberBox.checked) {
+                        localStorage.setItem('mnh_remember_phone', phone);
+                    } else {
+                        localStorage.removeItem('mnh_remember_phone');
+                    }
+
+                    btn.innerHTML = 'Welcome back, ' + res.data[0].mother_name.split(' ')[0] + '!';
+                    btn.style.background = '#16a34a';
+
+                    setTimeout(function () {
+                        window.location.href = 'mother-dashboard.html';
+                    }, 800);
+
+                } catch (err) {
+                    console.error('[Mother Login] Error:', err);
+                    showError('Something went wrong while checking your phone number. Please try again.', false);
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
