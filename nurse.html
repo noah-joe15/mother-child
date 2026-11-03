@@ -339,6 +339,168 @@
             color: #94a3b8;
         }
 
+        /* Locked (auto-filled) fields */
+        .form-group input[readonly] {
+            background: #eef2ff;
+            border-color: #c7d2fe;
+            color: #3730a3;
+            cursor: not-allowed;
+        }
+
+        .form-group select:disabled {
+            background: #eef2ff;
+            border-color: #c7d2fe;
+            color: #3730a3;
+            cursor: not-allowed;
+        }
+
+        /* Check phone button */
+        .btn-check {
+            padding: 10px 18px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .btn-check:hover {
+            background: var(--primary-light);
+        }
+
+        /* Mother lookup banner */
+        .lookup-banner {
+            display: none;
+            margin-top: 16px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.6;
+        }
+
+        .lookup-banner.found {
+            display: block;
+            background: #dcfce7;
+            border: 1.5px solid #86efac;
+            color: #166534;
+        }
+
+        .lookup-banner.unborn {
+            display: block;
+            background: #fef3c7;
+            border: 1.5px solid #fcd34d;
+            color: #92400e;
+        }
+
+        .lookup-banner.notfound {
+            display: block;
+            background: #f1f5f9;
+            border: 1.5px solid #e2e8f0;
+            color: #475569;
+        }
+
+        .lookup-banner.error {
+            display: block;
+            background: #fee2e2;
+            border: 1.5px solid #fca5a5;
+            color: #991b1b;
+        }
+
+        .lookup-banner .recheck {
+            background: none;
+            border: none;
+            color: inherit;
+            text-decoration: underline;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 0;
+            margin-left: 10px;
+        }
+
+        /* Child selection cards */
+        .child-select-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            background: #f8fafc;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .child-select-card:hover {
+            border-color: var(--primary-light);
+            background: white;
+        }
+
+        .child-select-card.selected {
+            border-color: var(--primary);
+            background: #eff6ff;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+
+        .child-select-card input[type="radio"] {
+            accent-color: var(--primary);
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        .cs-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .cs-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .panel-title {
+            margin-bottom: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Unborn choice buttons */
+        .unborn-choice {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+
+        .unborn-choice button {
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1.5px solid var(--border);
+            background: white;
+            color: var(--text-dark);
+            transition: all 0.15s ease;
+        }
+
+        .unborn-choice button.active {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+        }
+
         .status-box {
             padding: 16px 20px;
             border-radius: 12px;
@@ -423,10 +585,35 @@
             font-size: 18px;
             font-weight: 700;
             color: var(--text-dark);
-            margin-bottom: 24px;
+            margin-bottom: 16px;
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+
+        /* Scroll shelf for recent patients */
+        .recent-scroll {
+            max-height: 380px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+
+        .recent-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .recent-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+
+        .recent-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+
+        .recent-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
 
         .patient-item {
@@ -585,13 +772,13 @@
                 </div>
             </div>
 
-            <!-- Registration Form -->
+            <!-- Registration / Visit Form -->
             <div class="form-card">
                 <div class="form-header">
                     <div class="form-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 28px; height: 28px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/></svg>
                     </div>
-                    <h2 class="form-title">New Patient Registration & Vitals</h2>
+                    <h2 class="form-title">Patient Registration & Vitals</h2>
                 </div>
 
                 <form id="nurse_form">
@@ -604,14 +791,21 @@
                             </div>
                             <div class="form-group">
                                 <label>Phone Number *</label>
-                                <input type="tel" id="phone_number" required placeholder="0712345678">
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="tel" id="phone_number" required placeholder="0712345678" style="flex: 1;">
+                                    <button type="button" id="check_phone_btn" class="btn-check">Check</button>
+                                </div>
                             </div>
                         </div>
+                        <div id="mother_lookup_status" class="lookup-banner"></div>
+                        <input type="hidden" id="selected_patient_id" value="">
+                        <input type="hidden" id="form_mode" value="new">
                     </div>
 
                     <div class="form-section">
                         <div class="section-header">Child's Information <span style="font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: none; letter-spacing: normal;">(optional for antenatal)</span></div>
-                        <div class="form-grid">
+                        <div id="child_panel"></div>
+                        <div class="form-grid form-grid-3" id="child_fields_wrap">
                             <div class="form-group">
                                 <label>Child's Name</label>
                                 <input type="text" id="child_name" placeholder="Leave blank if unborn">
@@ -619,6 +813,14 @@
                             <div class="form-group">
                                 <label>Date of Birth</label>
                                 <input type="date" id="child_dob">
+                            </div>
+                            <div class="form-group">
+                                <label>Sex</label>
+                                <select id="child_sex">
+                                    <option value="">Select Sex</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -655,13 +857,14 @@
                 </form>
             </div>
 
-            <!-- Recent Patients -->
+            <!-- Recent Patients (scroll shelf) -->
             <div class="recent-card">
                 <h3 class="recent-header">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                     Recent Patients
+                    <span style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: none; letter-spacing: normal;">(scroll inside to browse)</span>
                 </h3>
-                <div id="recent_list">
+                <div id="recent_list" class="recent-scroll">
                     <p style="color: var(--text-muted); text-align: center; padding: 40px;">Loading recent patients...</p>
                 </div>
             </div>
@@ -669,6 +872,6 @@
         </div>
     </main>
 
-    <script src="/nurse-actions.js?v=1"></script>
+    <script src="/nurse-actions.js?v=2"></script>
 </body>
 </html>
