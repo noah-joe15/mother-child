@@ -105,8 +105,8 @@
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 16px;
             margin-bottom: 32px;
         }
 
@@ -114,7 +114,7 @@
             background: white;
             border: 1px solid var(--border);
             border-radius: 16px;
-            padding: 24px;
+            padding: 20px 16px;
             text-align: center;
             box-shadow: var(--shadow);
             transition: all 0.3s ease;
@@ -126,23 +126,108 @@
         }
 
         .stat-number {
-            font-size: 36px;
+            font-size: 32px;
             font-weight: 800;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             line-height: 1;
         }
 
         .stat-label {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-muted);
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
 
-        .stat-card.registered .stat-number { color: var(--primary-light); }
+        .stat-card.mothers .stat-number { color: var(--primary-light); }
+        .stat-card.babies .stat-number { color: #ec4899; }
+        .stat-card.registered .stat-number { color: var(--primary); }
         .stat-card.awaiting .stat-number { color: var(--warning); }
         .stat-card.completed .stat-number { color: var(--success); }
+
+        /* Search styles */
+        .search-wrap {
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+        .search-wrap > svg {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px 12px 42px;
+            font-size: 15px;
+            color: var(--text-dark);
+            background: #f8fafc;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-light);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .search-results {
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .search-item {
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            border: 1.5px solid transparent;
+            transition: all 0.15s ease;
+        }
+
+        .search-item:hover {
+            background: white;
+            border-color: var(--primary-light);
+            box-shadow: var(--shadow);
+        }
+
+        .search-item h4 {
+            margin: 0 0 2px 0;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .search-item p {
+            margin: 0;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .search-hint {
+            color: var(--text-muted);
+            text-align: center;
+            padding: 16px;
+            font-size: 13px;
+            font-style: italic;
+        }
 
         .form-card {
             background: white;
@@ -398,7 +483,7 @@
             }
             
             .stats-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
             }
             
             .patient-item {
@@ -456,11 +541,19 @@
             
             <div class="page-header">
                 <h1>Nurse Station</h1>
-                <p>Register patients and record vital signs</p>
+                <p>Register patients, record vitals, and search full medical records</p>
             </div>
 
-            <!-- Stats -->
+            <!-- System-wide Stats -->
             <div class="stats-grid">
+                <div class="stat-card mothers">
+                    <div class="stat-number" id="stat_mothers">0</div>
+                    <div class="stat-label">Total Mothers</div>
+                </div>
+                <div class="stat-card babies">
+                    <div class="stat-number" id="stat_babies">0</div>
+                    <div class="stat-label">Total Babies</div>
+                </div>
                 <div class="stat-card registered">
                     <div class="stat-number" id="stat_registered">0</div>
                     <div class="stat-label">Registered Today</div>
@@ -472,6 +565,23 @@
                 <div class="stat-card completed">
                     <div class="stat-number" id="stat_completed">0</div>
                     <div class="stat-label">Completed Today</div>
+                </div>
+            </div>
+
+            <!-- Patient Search -->
+            <div class="form-card" style="padding: 24px 32px;">
+                <div class="form-header" style="margin-bottom: 16px; padding-bottom: 16px;">
+                    <div class="form-icon" style="width: 40px; height: 40px; border-radius: 10px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    </div>
+                    <h2 class="form-title" style="font-size: 18px;">Patient Search</h2>
+                </div>
+                <div class="search-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="search_input" class="search-input" placeholder="Search by mother name, child name, or phone number..." autocomplete="off">
+                </div>
+                <div id="search_results" class="search-results">
+                    <p class="search-hint">Type at least 2 characters to search all registered mothers and children.</p>
                 </div>
             </div>
 
@@ -500,33 +610,33 @@
                     </div>
 
                     <div class="form-section">
-                        <div class="section-header">Child's Information</div>
+                        <div class="section-header">Child's Information <span style="font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: none; letter-spacing: normal;">(optional for antenatal)</span></div>
                         <div class="form-grid">
                             <div class="form-group">
-                                <label>Child's Name *</label>
-                                <input type="text" id="child_name" required placeholder="e.g., Neema Sarah">
+                                <label>Child's Name</label>
+                                <input type="text" id="child_name" placeholder="Leave blank if unborn">
                             </div>
                             <div class="form-group">
-                                <label>Date of Birth *</label>
-                                <input type="date" id="child_dob" required>
+                                <label>Date of Birth</label>
+                                <input type="date" id="child_dob">
                             </div>
                         </div>
                     </div>
 
                     <div class="form-section">
-                        <div class="section-header">Vital Signs</div>
+                        <div class="section-header">Vital Signs <span style="font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: none; letter-spacing: normal;">(leave blank for antenatal visits)</span></div>
                         <div class="form-grid form-grid-3">
                             <div class="form-group">
-                                <label>Weight (kg) *</label>
-                                <input type="number" step="0.01" id="weight_kg" required placeholder="7.50">
+                                <label>Weight (kg)</label>
+                                <input type="number" step="0.01" id="weight_kg" placeholder="7.50">
                             </div>
                             <div class="form-group">
-                                <label>MUAC (mm) *</label>
-                                <input type="number" id="muac_mm" required placeholder="120" oninput="checkNutrition(this.value)">
+                                <label>MUAC (mm)</label>
+                                <input type="number" id="muac_mm" placeholder="120" oninput="checkNutrition(this.value)">
                             </div>
                             <div class="form-group">
-                                <label>Temperature (°C) *</label>
-                                <input type="number" step="0.1" id="temperature" required placeholder="36.5">
+                                <label>Temperature (°C)</label>
+                                <input type="number" step="0.1" id="temperature" placeholder="36.5">
                             </div>
                         </div>
 
@@ -545,7 +655,7 @@
                 </form>
             </div>
 
-            <!-- Recent Activity -->
+            <!-- Recent Patients -->
             <div class="recent-card">
                 <h3 class="recent-header">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -559,203 +669,6 @@
         </div>
     </main>
 
-    <script>
-        console.log('[Nurse] Page loaded');
-        
-        const supabaseClient = window.supabase.createClient(
-            'https://fmaaudmdgmgklvqcmvad.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E'
-        );
-        
-        const db = new Dexie("MNHRCHDatabase");
-        db.version(1).stores({ vitals: '++id, patient_id, synced' });
-
-        async function initNurse() {
-            try {
-                const { data: { session } } = await supabaseClient.auth.getSession();
-                
-                if (!session) {
-                    console.log('[Nurse] No session, redirecting to login');
-                    window.location.href = 'login.html';
-                    return;
-                }
-
-                const { data: profile } = await supabaseClient
-                    .from('profiles')
-                    .select('full_name, role')
-                    .eq('id', session.user.id)
-                    .single();
-
-                if (!profile || (profile.role !== 'nurse' && profile.role !== 'admin')) {
-                    console.log('[Nurse] Unauthorized, redirecting');
-                    window.location.href = 'login.html';
-                    return;
-                }
-
-                console.log('[Nurse] Authorized user:', profile.full_name);
-                document.getElementById('user_info').textContent = `Nurse: ${profile.full_name}`;
-                document.getElementById('loading_message').style.display = 'none';
-                document.getElementById('nurse_content').style.display = 'block';
-                
-                loadStats();
-                setupForm();
-                updateNetwork();
-                
-            } catch (error) {
-                console.error('[Nurse] Init error:', error);
-                document.getElementById('loading_message').innerHTML = '<p style="color: var(--danger); font-size: 16px; font-weight: 600;">️ Error loading portal. Please refresh the page.</p>';
-            }
-        }
-
-        function setupForm() {
-            document.getElementById('nurse_form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                console.log('[Nurse] Form submitted');
-                
-                const btn = document.getElementById('submit_btn');
-                const originalContent = btn.innerHTML;
-                btn.innerHTML = '<span style="display: flex; align-items: center; justify-content: center; gap: 10px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-opacity="1"/></svg> Processing...</span>';
-                btn.disabled = true;
-
-                try {
-                    const { data: patient, error: pError } = await supabaseClient
-                        .from('patients')
-                        .insert({
-                            mother_name: document.getElementById('mother_name').value,
-                            phone_number: document.getElementById('phone_number').value,
-                            child_name: document.getElementById('child_name').value,
-                            child_dob: document.getElementById('child_dob').value,
-                            created_at: new Date().toISOString()
-                        })
-                        .select()
-                        .single();
-
-                    if (pError) throw pError;
-
-                    await supabaseClient.from('vitals').insert({
-                        patient_id: patient.id,
-                        weight_kg: parseFloat(document.getElementById('weight_kg').value),
-                        muac_mm: parseInt(document.getElementById('muac_mm').value),
-                        temperature: parseFloat(document.getElementById('temperature').value),
-                        recorded_at: new Date().toISOString()
-                    });
-
-                    await supabaseClient.from('queue').insert({
-                        patient_id: patient.id,
-                        current_station: 'Doctor',
-                        status: 'Waiting',
-                        created_at: new Date().toISOString()
-                    });
-
-                    // Success animation
-                    btn.innerHTML = '<span style="display: flex; align-items: center; justify-content: center; gap: 10px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 20px; height: 20px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Success!</span>';
-                    btn.style.background = 'linear-gradient(135deg, #16a34a, #22c55e)';
-                    
-                    setTimeout(() => {
-                        alert('✓ Patient registered successfully and sent to doctor\'s queue!');
-                        document.getElementById('nurse_form').reset();
-                        document.getElementById('nutrition_status').className = 'status-box neutral';
-                        document.getElementById('nutrition_status').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Enter MUAC to check nutritional status</span>';
-                        btn.innerHTML = originalContent;
-                        btn.style.background = '';
-                        btn.disabled = false;
-                        loadStats();
-                    }, 500);
-
-                } catch (error) {
-                    console.error('[Nurse] Save error:', error);
-                    alert('Error: ' + error.message);
-                    btn.innerHTML = originalContent;
-                    btn.disabled = false;
-                }
-            });
-        }
-
-        function checkNutrition(muac) {
-            const box = document.getElementById('nutrition_status');
-            const val = parseInt(muac);
-            
-            if (isNaN(val)) {
-                box.className = 'status-box neutral';
-                box.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Enter MUAC to check nutritional status</span>';
-            } else if (val < 115) {
-                box.className = 'status-box danger';
-                box.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>SEVERE MALNUTRITION (RED) - Immediate Attention Required!</span>';
-            } else if (val < 125) {
-                box.className = 'status-box warning';
-                box.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>MODERATE MALNUTRITION (YELLOW) - Monitor Closely</span>';
-            } else {
-                box.className = 'status-box success';
-                box.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>HEALTHY (GREEN) - Normal Nutrition Status</span>';
-            }
-        }
-
-        async function loadStats() {
-            const today = new Date().toISOString().split('T')[0];
-            
-            const { count: regCount } = await supabaseClient.from('patients').select('*', { count: 'exact', head: true }).gte('created_at', `${today}T00:00:00`);
-            document.getElementById('stat_registered').textContent = regCount || 0;
-
-            const { count: awaitCount } = await supabaseClient.from('queue').select('*', { count: 'exact', head: true }).eq('current_station', 'Doctor').eq('status', 'Waiting');
-            document.getElementById('stat_awaiting').textContent = awaitCount || 0;
-
-            const { count: compCount } = await supabaseClient.from('queue').select('*', { count: 'exact', head: true }).eq('status', 'Completed').gte('created_at', `${today}T00:00:00`);
-            document.getElementById('stat_completed').textContent = compCount || 0;
-
-            const { data: recent } = await supabaseClient.from('vitals').select('*, patients(mother_name, child_name)').order('recorded_at', { ascending: false }).limit(5);
-            const list = document.getElementById('recent_list');
-            
-            if (!recent || recent.length === 0) {
-                list.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 40px; font-style: italic;">No recent patients registered yet</p>';
-            } else {
-                list.innerHTML = recent.map(v => {
-                    const muacStatus = v.muac_mm < 115 ? 'danger' : v.muac_mm < 125 ? 'warning' : 'success';
-                    const muacText = v.muac_mm < 115 ? 'Severe' : v.muac_mm < 125 ? 'Moderate' : 'Healthy';
-                    const muacColor = v.muac_mm < 115 ? '#ef4444' : v.muac_mm < 125 ? '#d97706' : '#16a34a';
-                    
-                    return `
-                        <div class="patient-item">
-                            <div class="patient-info">
-                                <h4>${v.patients?.child_name || 'Unknown Child'}</h4>
-                                <p>Mother: ${v.patients?.mother_name || 'Unknown'}</p>
-                            </div>
-                            <div class="patient-meta">
-                                <div>W: ${v.weight_kg}kg | MUAC: <span style="color: ${muacColor}; font-weight: 700;">${v.muac_mm}mm (${muacText})</span></div>
-                                <small>${new Date(v.recorded_at).toLocaleTimeString()}</small>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-        }
-
-        function updateNetwork() {
-            const badge = document.getElementById('network_status');
-            const text = document.getElementById('network_text');
-            if (navigator.onLine) {
-                text.textContent = 'ONLINE';
-                badge.className = 'network-badge online';
-            } else {
-                text.textContent = 'OFFLINE';
-                badge.className = 'network-badge offline';
-            }
-        }
-
-        window.addEventListener('online', updateNetwork);
-        window.addEventListener('offline', updateNetwork);
-
-        async function handleLogout() {
-            console.log('[Nurse] Logout initiated');
-            await supabaseClient.auth.signOut();
-            window.location.href = 'login.html';
-        }
-
-        // Add spin animation
-        const style = document.createElement('style');
-        style.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
-        document.head.appendChild(style);
-
-        initNurse();
-    </script>
+    <script src="/nurse-actions.js?v=1"></script>
 </body>
 </html>
