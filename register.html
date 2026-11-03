@@ -149,6 +149,45 @@
             border-color: #16a34a;
         }
 
+        /* Duplicate / error box */
+        #error_message {
+            display: none;
+            margin-top: 20px;
+            padding: 16px;
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            border-radius: 12px;
+            color: #991b1b;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        #error_message a {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: #1e3a8a;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .alt-links {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .alt-links a {
+            color: var(--blue-accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
@@ -288,7 +327,11 @@
                 </svg>
                 Account created! Redirecting to your dashboard...
             </div>
+
+            <div id="error_message"></div>
         </form>
+
+        <p class="alt-links">Already registered? <a href="mother-login.html">Login here</a></p>
 
     </main>
 
@@ -298,72 +341,108 @@
         </div>
     </footer>
 
-            <script>
-        const SUPABASE_URL = 'https://fmaaudmdgmgklvqcmvad.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    <script>
+        (function () {
+            var SUPABASE_URL = 'https://fmaaudmdgmgklvqcmvad.supabase.co';
+            var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E';
+            var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        document.getElementById('registration_form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const btn = document.getElementById('submit_btn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'Registering...';
-            btn.disabled = true;
-
-            try {
-                // Safely parse values, ensuring empty strings become null
-                const motherAgeVal = document.getElementById('mother_age').value;
-                const childDobVal = document.getElementById('child_dob').value;
-                const childNameVal = document.getElementById('child_name').value.trim();
-                const childSexVal = document.getElementById('child_sex').value;
-
-                const payload = {
-                    mother_name: document.getElementById('mother_name').value,
-                    phone_number: document.getElementById('phone_number').value,
-                    mother_age: motherAgeVal ? parseInt(motherAgeVal, 10) : null,
-                    sha_number: document.getElementById('sha_number').value.trim() || null,
-                    residence: document.getElementById('residence').value.trim() || null,
-                    child_name: childNameVal === '' ? null : childNameVal,
-                    child_dob: childDobVal === '' ? null : childDobVal,
-                    child_sex: childSexVal === '' ? null : childSexVal,
-                    created_at: new Date().toISOString()
-                };
-
-                console.log('[Register] Attempting to insert payload:', payload);
-
-                const { data, error } = await supabaseClient
-                    .from('patients')
-                    .insert(payload)
-                    .select();
-
-                if (error) {
-                    console.error('[Register] Supabase Error Object:', JSON.stringify(error, null, 2));
-                    throw error;
-                }
-
-                console.log('[Register] Success:', data);
-
-                btn.innerHTML = 'Registered Successfully!';
-                btn.style.background = '#16a34a';
-                
-                localStorage.setItem('mnh_user_phone', document.getElementById('phone_number').value);
-                localStorage.setItem('mnh_user_name', document.getElementById('mother_name').value);
-                
-                setTimeout(() => {
-                    alert('Registration successful!\n\nRedirecting to your dashboard...');
-                    window.location.href = 'mother-dashboard.html';
-                }, 1000);
-
-            } catch (error) {
-                console.error('[Register] Registration failed:', error);
-                // Show the exact database error to help us debug
-                const errorMsg = error.details || error.message || 'Unknown database error';
-                alert('Failed to register: ' + errorMsg + '\n\n(Please check the browser console for full details)');
-                btn.innerHTML = originalText;
-                btn.disabled = false;
+            function escapeHtml(s) {
+                return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+                });
             }
-        });
+
+            document.getElementById('registration_form').addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                var errorBox = document.getElementById('error_message');
+                var successBox = document.getElementById('success_message');
+                errorBox.style.display = 'none';
+                successBox.style.display = 'none';
+
+                var btn = document.getElementById('submit_btn');
+                var originalText = btn.innerHTML;
+                btn.innerHTML = 'Checking...';
+                btn.disabled = true;
+
+                try {
+                    var phoneVal = document.getElementById('phone_number').value.trim();
+
+                    // STEP 1: Duplicate check - user must not register twice
+                    var existRes = await supabaseClient
+                        .from('patients')
+                        .select('id, mother_name')
+                        .eq('phone_number', phoneVal)
+                        .limit(1);
+
+                    if (!existRes.error && existRes.data && existRes.data.length > 0) {
+                        var name = existRes.data[0].mother_name ? ' to ' + escapeHtml(existRes.data[0].mother_name) : '';
+                        errorBox.style.display = 'block';
+                        errorBox.innerHTML =
+                            'This phone number is already registered' + name + '.<br>' +
+                            'You do not need to register again. Your existing record is safe.<br>' +
+                            '<a href="mother-login.html?phone=' + encodeURIComponent(phoneVal) + '">Login with this phone</a>';
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                        return;
+                    }
+
+                    // STEP 2: Build payload with nulls for empty optional fields
+                    btn.innerHTML = 'Registering...';
+                    var motherAgeVal = document.getElementById('mother_age').value;
+                    var childDobVal = document.getElementById('child_dob').value;
+                    var childNameVal = document.getElementById('child_name').value.trim();
+                    var childSexVal = document.getElementById('child_sex').value;
+
+                    var payload = {
+                        mother_name: document.getElementById('mother_name').value,
+                        phone_number: phoneVal,
+                        mother_age: motherAgeVal ? parseInt(motherAgeVal, 10) : null,
+                        sha_number: document.getElementById('sha_number').value.trim() || null,
+                        residence: document.getElementById('residence').value.trim() || null,
+                        child_name: childNameVal === '' ? null : childNameVal,
+                        child_dob: childDobVal === '' ? null : childDobVal,
+                        child_sex: childSexVal === '' ? null : childSexVal,
+                        created_at: new Date().toISOString()
+                    };
+
+                    console.log('[Register] Attempting to insert payload:', payload);
+
+                    var res = await supabaseClient
+                        .from('patients')
+                        .insert(payload)
+                        .select();
+
+                    if (res.error) {
+                        console.error('[Register] Supabase Error Object:', JSON.stringify(res.error, null, 2));
+                        throw res.error;
+                    }
+
+                    console.log('[Register] Success:', res.data);
+
+                    btn.innerHTML = 'Registered Successfully!';
+                    btn.style.background = '#16a34a';
+
+                    localStorage.setItem('mnh_user_phone', phoneVal);
+                    localStorage.setItem('mnh_user_name', document.getElementById('mother_name').value);
+
+                    successBox.style.display = 'block';
+
+                    setTimeout(function () {
+                        window.location.href = 'mother-dashboard.html';
+                    }, 1000);
+
+                } catch (error) {
+                    console.error('[Register] Registration failed:', error);
+                    var errorMsg = error.details || error.message || 'Unknown database error';
+                    errorBox.style.display = 'block';
+                    errorBox.innerHTML = 'Failed to register: ' + escapeHtml(errorMsg);
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+        })();
     </script>
 </body>
 </html>
