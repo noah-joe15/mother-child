@@ -281,7 +281,7 @@
 
         .quick-actions-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 16px;
             margin-bottom: 24px;
         }
@@ -290,7 +290,7 @@
             background: white;
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 20px;
+            padding: 20px 12px;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s;
@@ -326,8 +326,9 @@
         }
 
         .action-label {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
+            line-height: 1.3;
         }
 
         .activity-list {
@@ -389,6 +390,62 @@
             font-weight: 600;
             color: var(--text-dark);
             border: 1px solid var(--border);
+        }
+
+        /* Modal form styles */
+        .modal-form-group {
+            margin-bottom: 16px;
+        }
+
+        .modal-form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 6px;
+        }
+
+        .modal-form-group input,
+        .modal-form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 14px;
+            color: #0f172a;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 8px;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
+        }
+
+        .modal-form-group input:focus,
+        .modal-form-group select:focus {
+            border-color: #3b82f6;
+            background: white;
+        }
+
+        .modal-submit-btn {
+            width: 100%;
+            padding: 12px;
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.2s;
+        }
+
+        .modal-submit-btn:hover {
+            background: #3b82f6;
+        }
+
+        .modal-submit-btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -572,6 +629,18 @@
                         </div>
                         <span class="action-label">Update My Info</span>
                     </button>
+
+                    <button onclick="registerNewborn()" class="action-btn">
+                        <div class="action-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="8.5" cy="7" r="4"></circle>
+                                <line x1="20" y1="8" x2="20" y2="14"></line>
+                                <line x1="23" y1="11" x2="17" y2="11"></line>
+                            </svg>
+                        </div>
+                        <span class="action-label">Register Newborn</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -589,118 +658,13 @@
             </div>
             
             <div class="activity-list" id="activity_list">
-                <!-- Populated by JS -->
                 <div style="text-align: center; padding: 20px; color: var(--text-muted);">Loading activity...</div>
             </div>
         </div>
 
     </main>
 
-    <!-- Future Actions Handler (Placeholder for separate JS file) -->
-    <script src="/patient-actions.js?v=1"></script>
-
-    <script>
-        console.log('[Mother Dashboard] Page loaded');
-        
-        const supabaseClient = window.supabase.createClient(
-            'https://fmaaudmdgmgklvqcmvad.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E'
-        );
-
-        // Mock Data for Demonstration (Will be replaced by Supabase fetch in patient-actions.js)
-        const mockData = {
-            mother: {
-                name: "Josephine Mwamasage",
-                phone: "0712345678"
-            },
-            child: {
-                name: "Kaya Joram",
-                dob: "01 Nov 2026",
-                age: "1 month",
-                sex: "Female",
-                nutrition: "Normal",
-                immunization: "On Track"
-            },
-            nextVaccine: "BCG & OPV0 Due in 5 days",
-            recentActivity: [
-                {
-                    day: "02",
-                    month: "Nov",
-                    title: "Consultation",
-                    doctor: "Dr. Amina - Healthy checkup",
-                    vitals: ["Weight: 5kg", "MUAC: 200mm"]
-                },
-                {
-                    day: "01",
-                    month: "Nov",
-                    title: "Registration",
-                    doctor: "Nurse Juma - Initial intake",
-                    vitals: ["Registered in system"]
-                }
-            ]
-        };
-
-        async function initDashboard() {
-            try {
-                // In production, fetch this from Supabase based on logged-in user ID
-                // For now, we render the mock data to show the UI structure
-                
-                document.getElementById('user_name').textContent = mockData.mother.name;
-                document.getElementById('user_phone').textContent = mockData.mother.phone;
-                
-                document.getElementById('child_name').textContent = mockData.child.name;
-                document.getElementById('child_dob').textContent = `${mockData.child.dob} (${mockData.child.age})`;
-                document.getElementById('child_sex').textContent = mockData.child.sex;
-                document.getElementById('nutrition_status').innerHTML = `
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 12px; height: 12px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    ${mockData.child.nutrition}
-                `;
-                document.getElementById('immuno_status').innerHTML = `
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 12px; height: 12px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    ${mockData.child.immunization}
-                `;
-                
-                document.getElementById('next_vaccine_text').textContent = mockData.nextVaccine;
-
-                renderActivityList();
-
-            } catch (error) {
-                console.error('[Mother Dashboard] Init error:', error);
-            }
-        }
-
-        function renderActivityList() {
-            const listContainer = document.getElementById('activity_list');
-            
-            if (!mockData.recentActivity || mockData.recentActivity.length === 0) {
-                listContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No recent activity</div>';
-                return;
-            }
-
-            listContainer.innerHTML = mockData.recentActivity.map(activity => `
-                <div class="activity-item">
-                    <div class="activity-date">
-                        <div class="activity-day">${activity.day}</div>
-                        <div class="activity-month">${activity.month}</div>
-                    </div>
-                    <div class="activity-details" style="flex: 1;">
-                        <h4>${activity.title}</h4>
-                        <p>${activity.doctor}</p>
-                        <div class="activity-vitals">
-                            ${activity.vitals.map(vital => `<span class="vital-tag">${vital}</span>`).join('')}
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function handleLogout() {
-            await supabaseClient.auth.signOut();
-            window.location.href = 'login.html';
-        }
-
-        // Initialize
-        initDashboard();
-    </script>
+    <!-- All actions handled by this single JS file -->
+    <script src="/patient-actions.js?v=2"></script>
 </body>
 </html>
