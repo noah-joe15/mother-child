@@ -1,0 +1,801 @@
+/* ============================================
+   MNH RCH — RESPONSIVE MOBILE-FIRST SYSTEM
+   Native App Feel Across All Devices
+   ============================================ */
+
+/* Prevent pinch-zoom, native scroll behavior */
+html, body {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+}
+
+/* Safe areas for notches, home indicators, fold creases */
+:root {
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --nav-height: 64px;
+    --bottom-nav-height: 68px;
+    --sidebar-width: 280px;
+}
+
+/* ============================================
+   MOBILE BREAKPOINT (All phones & small tablets)
+   ============================================ */
+@media (max-width: 768px) {
+    html {
+        font-size: 14px;
+    }
+
+    body {
+        padding-top: var(--safe-top);
+        padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom));
+        overflow-x: hidden;
+    }
+
+    /* Hide desktop navbar content on mobile (replaced by sidebar) */
+    .navbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        padding: 12px 0;
+        height: var(--nav-height);
+        display: flex;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: saturate(180%) blur(20px);
+        -webkit-backdrop-filter: saturate(180%) blur(20px);
+    }
+
+    .container {
+        padding: 0 16px;
+    }
+
+    /* Logo smaller on mobile - native sizing */
+    .logo-mark {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+    }
+
+    .logo-mark svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .logo-text {
+        font-size: 15px;
+    }
+
+    .logo-text span {
+        font-size: 10px;
+    }
+
+    /* User pill - compact on mobile */
+    .user-pill {
+        padding: 6px 10px;
+        gap: 8px;
+    }
+
+    .user-pill-name {
+        font-size: 12px;
+        max-width: 90px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .user-pill-phone {
+        font-size: 10px;
+        display: none;
+    }
+
+    .user-pill svg {
+        width: 24px !important;
+        height: 24px !important;
+    }
+
+    /* Hide logout button on mobile (moved to sidebar) */
+    .btn-logout {
+        display: none;
+    }
+
+    /* Show hamburger on mobile */
+    .hamburger-btn {
+        display: flex !important;
+    }
+
+    /* Main content padding */
+    main {
+        padding: 16px;
+        padding-bottom: 24px;
+    }
+
+    /* Vaccination alert - stacked on mobile */
+    .vaccination-alert {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16px;
+        gap: 12px;
+        border-radius: 14px;
+        margin-bottom: 16px;
+    }
+
+    .vaccination-info h3 {
+        font-size: 14px;
+        margin-bottom: 2px;
+    }
+
+    .vaccination-info h3 svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .vaccination-info p {
+        font-size: 13px;
+    }
+
+    .btn-secondary {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+
+    /* Dashboard grid - single column */
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    /* Cards - native sizing */
+    .card {
+        padding: 16px;
+        border-radius: 14px;
+    }
+
+    .card-header {
+        margin-bottom: 14px;
+        padding-bottom: 12px;
+    }
+
+    .card-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .card-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .card-title {
+        font-size: 15px;
+    }
+
+    /* Profile details - compact */
+    .profile-detail {
+        padding: 8px 0;
+    }
+
+    .detail-label {
+        font-size: 12px;
+        gap: 6px;
+    }
+
+    .detail-label svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .detail-value {
+        font-size: 13px;
+    }
+
+    .status-badge {
+        padding: 3px 8px;
+        font-size: 11px;
+    }
+
+    /* Quick actions - 3 column grid on mobile */
+    .quick-actions-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .action-btn {
+        padding: 12px 6px;
+        border-radius: 10px;
+        gap: 6px;
+        min-height: 72px;
+    }
+
+    .action-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+    }
+
+    .action-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .action-label {
+        font-size: 11px;
+        line-height: 1.2;
+    }
+
+    /* Activity list - compact */
+    .activity-item {
+        padding: 12px;
+        gap: 12px;
+        border-radius: 10px;
+    }
+
+    .activity-date {
+        min-width: 54px;
+    }
+
+    .activity-day {
+        font-size: 16px;
+    }
+
+    .activity-month {
+        font-size: 10px;
+    }
+
+    .activity-details h4 {
+        font-size: 13px;
+    }
+
+    .activity-details p {
+        font-size: 11px;
+        margin-bottom: 6px;
+    }
+
+    .vital-tag {
+        padding: 3px 8px;
+        font-size: 10px;
+    }
+
+    /* Modal adjustments */
+    #dynamic_modal > div {
+        max-height: 85vh;
+        overflow-y: auto;
+    }
+
+    .modal-form-group label {
+        font-size: 12px;
+    }
+
+    .modal-form-group input,
+    .modal-form-group select {
+        font-size: 16px; /* Prevents iOS zoom */
+        padding: 12px;
+    }
+
+    .modal-submit-btn {
+        font-size: 15px;
+        padding: 14px;
+    }
+}
+
+/* ============================================
+   SIDEBAR MENU (Mobile Only)
+   ============================================ */
+.hamburger-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    border-radius: 10px;
+    color: var(--primary, #1e3a8a);
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s;
+}
+
+.hamburger-btn:active {
+    background: rgba(30, 58, 138, 0.08);
+}
+
+.hamburger-btn svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* Sidebar backdrop */
+.sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0);
+    backdrop-filter: blur(0px);
+    z-index: 998;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-backdrop.active {
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(4px);
+    pointer-events: auto;
+}
+
+/* Sidebar drawer */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--sidebar-width);
+    max-width: 85vw;
+    background: white;
+    z-index: 999;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.sidebar.open {
+    transform: translateX(0);
+}
+
+.sidebar-header {
+    padding: 20px;
+    padding-top: calc(20px + var(--safe-top));
+    border-bottom: 1px solid var(--border, #e2e8f0);
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    color: white;
+}
+
+.sidebar-user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sidebar-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.sidebar-avatar svg {
+    width: 24px;
+    height: 24px;
+    color: white;
+}
+
+.sidebar-user-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.sidebar-user-phone {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 2px 0 0 0;
+}
+
+.sidebar-nav {
+    flex: 1;
+    padding: 12px;
+}
+
+.sidebar-section {
+    margin-bottom: 16px;
+}
+
+.sidebar-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted, #64748b);
+    padding: 8px 12px 6px;
+    margin: 0;
+}
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    color: var(--text-dark, #0f172a);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    transition: background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.sidebar-item:active {
+    background: rgba(30, 58, 138, 0.08);
+}
+
+.sidebar-item.active {
+    background: rgba(30, 58, 138, 0.08);
+    color: #1e3a8a;
+    font-weight: 600;
+}
+
+.sidebar-item svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: var(--text-muted, #64748b);
+}
+
+.sidebar-item.active svg {
+    color: #1e3a8a;
+}
+
+.sidebar-footer {
+    padding: 12px;
+    padding-bottom: calc(12px + var(--safe-bottom));
+    border-top: 1px solid var(--border, #e2e8f0);
+}
+
+.sidebar-logout {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: transparent;
+    border: none;
+    width: 100%;
+    color: #ef4444;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.sidebar-logout:active {
+    background: #fee2e2;
+}
+
+.sidebar-logout svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* ============================================
+   BOTTOM NAVIGATION (Mobile Only)
+   ============================================ */
+.bottom-nav {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .bottom-nav {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: calc(var(--bottom-nav-height) + var(--safe-bottom));
+        padding-bottom: var(--safe-bottom);
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: saturate(180%) blur(20px);
+        -webkit-backdrop-filter: saturate(180%) blur(20px);
+        border-top: 1px solid var(--border, #e2e8f0);
+        z-index: 100;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        box-shadow: 0 -2px 12px rgba(30, 58, 138, 0.06);
+    }
+
+    .bottom-nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        padding: 8px 4px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: var(--text-muted, #64748b);
+        text-decoration: none;
+        -webkit-tap-highlight-color: transparent;
+        transition: color 0.15s;
+        position: relative;
+    }
+
+    .bottom-nav-item.active {
+        color: #1e3a8a;
+    }
+
+    .bottom-nav-item.active::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 25%;
+        right: 25%;
+        height: 2px;
+        background: #1e3a8a;
+        border-radius: 0 0 2px 2px;
+    }
+
+    .bottom-nav-item:active {
+        background: rgba(30, 58, 138, 0.06);
+    }
+
+    .bottom-nav-item svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .bottom-nav-label {
+        font-size: 10px;
+        font-weight: 600;
+    }
+}
+
+/* ============================================
+   SMALL PHONES (iPhone SE, Galaxy Fold closed)
+   ============================================ */
+@media (max-width: 390px) {
+    html {
+        font-size: 13px;
+    }
+
+    .quick-actions-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+
+    .action-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .action-icon svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .action-label {
+        font-size: 10px;
+    }
+}
+
+/* ============================================
+   TABLETS & LARGE PHONES
+   ============================================ */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .quick-actions-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ============================================
+   DESKTOP (1025px+) — Keep existing look
+   ============================================ */
+@media (min-width: 1025px) {
+    .sidebar,
+    .sidebar-backdrop,
+    .bottom-nav,
+    .hamburger-btn {
+        display: none !important;
+    }
+}
+
+/* ============================================
+   INDEX PAGE RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+    /* Hero section */
+    .hero {
+        padding: 32px 0 24px;
+    }
+
+    .badge {
+        padding: 8px 14px;
+        font-size: 11px;
+        margin-bottom: 20px;
+    }
+
+    .badge svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .hero h1 {
+        font-size: 26px;
+        line-height: 1.15;
+        margin-bottom: 16px;
+    }
+
+    .hero p {
+        font-size: 14px;
+        margin-bottom: 24px;
+        line-height: 1.6;
+    }
+
+    .hero-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .hero-buttons .btn {
+        width: 100%;
+        justify-content: center;
+        padding: 13px 20px;
+        font-size: 14px;
+    }
+
+    /* Features grid */
+    .features {
+        padding: 24px 0 40px;
+    }
+
+    .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .feature-card {
+        padding: 18px 12px;
+        border-radius: 12px;
+    }
+
+    .feature-icon {
+        width: 44px;
+        height: 44px;
+        margin-bottom: 10px;
+    }
+
+    .feature-icon svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .feature-card h3 {
+        font-size: 22px;
+        margin-bottom: 2px;
+    }
+
+    .feature-card p {
+        font-size: 10px;
+    }
+
+    /* Register CTA */
+    .register-cta {
+        padding: 24px 0 80px;
+    }
+
+    .cta-card {
+        padding: 24px 20px;
+        border-radius: 20px;
+        flex-direction: column;
+        text-align: center;
+        gap: 20px;
+    }
+
+    .cta-content h2 {
+        font-size: 22px;
+        margin-bottom: 8px;
+    }
+
+    .cta-content p {
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .cta-icon {
+        width: 80px;
+        height: 80px;
+    }
+
+    .cta-icon svg {
+        width: 36px;
+        height: 36px;
+    }
+
+    .register-cta .btn {
+        width: 100%;
+        justify-content: center;
+        padding: 13px 20px;
+    }
+
+    /* Footer */
+    .footer {
+        padding: 20px 0;
+        padding-bottom: calc(20px + var(--safe-bottom));
+        font-size: 11px;
+    }
+
+    /* Language switcher */
+    .lang-switcher {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    .lang-switcher svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    /* Logo */
+    .logo-mark {
+        width: 36px;
+        height: 36px;
+    }
+
+    .logo-text {
+        font-size: 15px;
+    }
+}
+
+/* ============================================
+   TOUCH ENHANCEMENTS
+   ============================================ */
+button, .btn, .action-btn, .sidebar-item, .bottom-nav-item {
+    touch-action: manipulation;
+}
+
+/* Smooth transitions for sidebar interactions */
+.sidebar,
+.sidebar-backdrop {
+    will-change: transform, opacity;
+}
+
+/* Hide scrollbar on sidebar */
+.sidebar::-webkit-scrollbar {
+    display: none;
+}
+
+.sidebar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* ============================================
+   PRINT STYLES (hide sidebar/bottom nav)
+   ============================================ */
+@media print {
+    .sidebar,
+    .sidebar-backdrop,
+    .bottom-nav,
+    .hamburger-btn,
+    .navbar {
+        display: none !important;
+    }
+
+    body {
+        padding: 0;
+    }
+}
