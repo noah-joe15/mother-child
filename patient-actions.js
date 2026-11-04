@@ -121,6 +121,23 @@
 
             currentPatient = patients[0];
 
+                        // Identity source of truth is the database row, never localStorage.
+            // This self-heals any stale or cross-role name left in storage.
+            var trueName = currentPatient.mother_name || name || 'Mother';
+            var truePhone = currentPatient.phone_number || phone;
+            document.getElementById('user_name').textContent = trueName;
+            document.getElementById('user_phone').textContent = truePhone;
+            try {
+                localStorage.setItem('mnh_user_name', trueName);
+                localStorage.setItem('mnh_user_phone', truePhone);
+            } catch (e) {}
+
+            // Re-sync the mega-brain sidebar header if it already rendered
+            var sideName = document.querySelector('.sidebar-user-name');
+            var sidePhone = document.querySelector('.sidebar-user-phone');
+            if (sideName) sideName.textContent = trueName;
+            if (sidePhone) sidePhone.textContent = truePhone;
+
             // Populate Child Profile
             document.getElementById('child_name').textContent = currentPatient.child_name || 'Unborn / Not Recorded';
             
