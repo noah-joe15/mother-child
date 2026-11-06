@@ -1,6 +1,6 @@
 /**
- * MNH RCH - Patient Actions & Dashboard Logic (v9)
- * Mother portal: identity, child profile, full growth history,
+ * MNH RCH - Patient Actions & Dashboard Logic (v10)
+ * Mother portal: identity, child profile, full growth history (with visual charts),
  * visits, immunization schedule, appointments, and the mother's
  * own ANC contacts per Tanzania National ANC Guidelines 2018.
  * Wrapped in IIFE to prevent duplicate-declaration crashes.
@@ -77,11 +77,32 @@
         var months = (today.getFullYear() - dob.getFullYear()) * 12;
         months -= dob.getMonth();
         months += today.getMonth();
-        if (months < 1) return 'Newborn';
+        if (months < 1) {
+            var days = Math.floor((today - dob) / 86400000);
+            return days + ' day' + (days !== 1 ? 's' : '');
+        }
         if (months < 12) return months + ' month' + (months > 1 ? 's' : '');
         var years = Math.floor(months / 12);
         var rem = months % 12;
         return rem > 0 ? years + ' year' + (years > 1 ? 's' : '') + ', ' + rem + ' mo' : years + ' year' + (years > 1 ? 's' : '');
+    }
+
+    function calculateAgeAtDate(dobString, targetDateString) {
+        if (!dobString) return '-';
+        var dob = new Date(dobString);
+        var target = new Date(targetDateString);
+        var months = (target.getFullYear() - dob.getFullYear()) * 12;
+        months -= dob.getMonth();
+        months += target.getMonth();
+        if (months < 0) return 'Unborn';
+        if (months < 1) {
+            var days = Math.floor((target - dob) / 86400000);
+            return days + ' day' + (days !== 1 ? 's' : '');
+        }
+        if (months < 12) return months + ' mo';
+        var years = Math.floor(months / 12);
+        var rem = months % 12;
+        return rem > 0 ? years + 'y ' + rem + 'm' : years + 'y';
     }
 
     function evaluateMUAC(muac) {
@@ -95,6 +116,12 @@
     function formatDate(dateString) {
         if (!dateString) return 'N/A';
         return new Date(dateString).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function formatShortDate(dateString) {
+        if (!dateString) return '';
+        var d = new Date(dateString);
+        return d.getDate() + '/' + (d.getMonth() + 1);
     }
 
     function sectionTitle(t) {
@@ -116,8 +143,8 @@
         }
 
         var modalHTML = '<div id="dynamic_modal" onclick="if(event.target===this)closeModal()" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; overflow-y: auto;">' +
-            '<div style="background: white; border-radius: 16px; width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.2); animation: slideUp 0.3s ease-out;">' +
-            '<div style="padding: 20px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: white; border-radius: 16px 16px 0 0;">' +
+            '<div style="background: white; border-radius: 16px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.2); animation: slideUp 0.3s ease-out;">' +
+            '<div style="padding: 20px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: white; border-radius: 16px 16px 0 0; z-index: 10;">' +
             '<h3 style="margin: 0; font-size: 18px; font-weight: 700; color: #0f172a;">' + title + '</h3>' +
             '<button onclick="closeModal()" style="background: none; border: none; cursor: pointer; color: #64748b; padding: 4px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>' +
             '</div>' +
@@ -236,12 +263,12 @@
             document.getElementById('child_dob').textContent = currentPatient.child_dob ? dobF + ' (' + age + ')' : 'Not recorded';
             document.getElementById('child_sex').textContent = currentPatient.child_sex || 'Not recorded';
 
-            // Full vitals history (newest first)
+            // Full vitals history (newest first, up to 100 records for full growth chart)
             var vRes = await supabase.from('vitals')
                 .select('muac_mm, weight_kg, temperature, recorded_at')
                 .eq('patient_id', currentPatient.id)
                 .order('recorded_at', { ascending: false })
-                .limit(12);
+                .limit(100);
             currentVitalsAll = vRes.data || [];
             currentVitals = currentVitalsAll[0] || null;
 
@@ -375,7 +402,6 @@
         if (!currentPatient) return;
         var html = '';
 
-        // Mother ANC appointments
         if (currentANC) {
             html += sectionTitle('Mother: antenatal appointments');
             var sched = buildAncSchedule(currentANC, currentANCContacts);
@@ -391,7 +417,6 @@
             html += '<div style="font-size:13px;color:#64748b;margin-bottom:6px;">Expected date of delivery: <strong style="color:#0f172a;">' + formatDate(currentANC.edd) + '</strong></div>';
         }
 
-        // Child vaccination appointments
         html += sectionTitle('Child: vaccination appointments');
         if (!currentPatient.child_dob) {
             html += '<div style="text-align:center;padding:14px;color:#64748b;font-size:13px;">Register your newborn to activate the vaccination schedule.</div>';
@@ -418,7 +443,7 @@
         showModal('Appointments', html);
     };
 
-    // FULLY PRACTICAL GROWTH CHART: latest values + weight trend + MUAC/temp history
+    // COMPREHENSIVE GROWTH CHART (Visual Line Chart + Full Data Table)
     window.viewGrowthChart = function () {
         if (!currentPatient) return;
         if (!currentVitalsAll || currentVitalsAll.length === 0) {
@@ -430,58 +455,116 @@
             return;
         }
 
-        var latest = currentVitalsAll[0];
+        // Chronological order (oldest to newest) for charting
         var chrono = currentVitalsAll.slice().reverse();
-        var maxW = 0;
-        chrono.forEach(function (v) { if (v.weight_kg != null && v.weight_kg > maxW) maxW = v.weight_kg; });
+        var latest = currentVitalsAll[0]; // newest
         var muacEval = evaluateMUAC(latest.muac_mm);
 
+        // Calculate total weight gain
+        var firstWeight = null, latestWeight = null;
+        for (var i = 0; i < chrono.length; i++) {
+            if (chrono[i].weight_kg != null) { firstWeight = chrono[i].weight_kg; break; }
+        }
+        for (var j = currentVitalsAll.length - 1; j >= 0; j--) {
+            if (currentVitalsAll[j].weight_kg != null) { latestWeight = currentVitalsAll[j].weight_kg; break; }
+        }
+        var weightGain = (firstWeight != null && latestWeight != null) ? (latestWeight - firstWeight).toFixed(2) : null;
+
         function statCard(label, value, color) {
-            return '<div style="background:#f8fafc;padding:12px;border-radius:8px;text-align:center;">' +
-                '<div style="font-size:12px;color:#64748b;">' + label + '</div>' +
-                '<div style="font-size:18px;font-weight:700;color:' + (color || '#0f172a') + ';">' + value + '</div></div>';
+            return '<div style="background:#f8fafc;padding:12px;border-radius:8px;text-align:center;flex:1;min-width:100px;">' +
+                '<div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">' + label + '</div>' +
+                '<div style="font-size:18px;font-weight:700;color:' + (color || '#0f172a') + ';margin-top:4px;">' + value + '</div></div>';
         }
 
-        var html = '<p style="font-size:13px;color:#64748b;margin:0 0 10px 0;">Latest measurement: ' + formatDate(latest.recorded_at) + '</p>' +
-            '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">' +
-            statCard('Weight', (latest.weight_kg != null ? latest.weight_kg : '-') + ' kg') +
-            statCard('MUAC', (latest.muac_mm != null ? latest.muac_mm : '-') + ' mm', muacEval.color) +
-            statCard('Temp', (latest.temperature != null ? latest.temperature : '-') + ' C') +
-            '</div>' +
-            '<div style="padding:10px 12px;background:' + (muacEval.cls === 'success' ? '#dcfce7' : '#fef3c7') + ';border-radius:8px;color:' + (muacEval.cls === 'success' ? '#166534' : '#92400e') + ';font-weight:600;text-align:center;font-size:13px;margin-bottom:6px;">Nutrition Status: ' + muacEval.status + '</div>';
+        var html = '<p style="font-size:14px;font-weight:600;color:#0f172a;margin:0 0 4px 0;">' + esc(currentPatient.child_name || 'Child') + '</p>' +
+            '<p style="font-size:12px;color:#64748b;margin:0 0 16px 0;">Current Age: ' + calculateAge(currentPatient.child_dob) + '</p>' +
+            
+            '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">' +
+            statCard('Latest Weight', (latest.weight_kg != null ? latest.weight_kg + ' kg' : '-')) +
+            statCard('Total Gain', (weightGain != null ? (weightGain > 0 ? '+' : '') + weightGain + ' kg' : '-'), weightGain > 0 ? '#16a34a' : '#0f172a') +
+            statCard('Latest MUAC', (latest.muac_mm != null ? latest.muac_mm + ' mm' : '-'), muacEval.color) +
+            statCard('Latest Temp', (latest.temperature != null ? latest.temperature + ' °C' : '-')) +
+            '</div>';
 
-        // Weight trend bars
-        html += sectionTitle('Weight trend (every recorded visit)');
-        var prev = null;
-        html += chrono.map(function (v) {
-            var w = v.weight_kg;
-            var deltaTxt = '';
-            if (w != null && prev != null) {
-                var d = Math.round((w - prev) * 100) / 100;
-                deltaTxt = d >= 0 ? ' (+' + d + ' kg)' : ' (' + d + ' kg)';
+        // --- SVG LINE CHART FOR WEIGHT ---
+        var weights = chrono.filter(function(v) { return v.weight_kg != null; });
+        if (weights.length > 0) {
+            html += sectionTitle('Weight Progression Over Time');
+            
+            var svgW = 500, svgH = 220;
+            var padL = 40, padR = 10, padT = 20, padB = 40;
+            var chartW = svgW - padL - padR;
+            var chartH = svgH - padT - padB;
+
+            var minW = Math.min.apply(null, weights.map(function(v) { return v.weight_kg; }));
+            var maxW = Math.max.apply(null, weights.map(function(v) { return v.weight_kg; }));
+            if (minW === maxW) { minW -= 1; maxW += 1; }
+            var rangeW = maxW - minW;
+
+            var points = [];
+            var labels = [];
+            
+            weights.forEach(function(v, i) {
+                var x = padL + (weights.length === 1 ? chartW / 2 : (i / (weights.length - 1)) * chartW);
+                var y = padT + chartH - ((v.weight_kg - minW) / rangeW) * chartH;
+                points.push(x + ',' + y);
+
+                labels.push('<text x="' + x + '" y="' + (svgH - 5) + '" font-size="10" fill="#64748b" text-anchor="middle">' + formatShortDate(v.recorded_at) + '</text>');
+                labels.push('<text x="' + x + '" y="' + (y - 8) + '" font-size="11" font-weight="bold" fill="#1e3a8a" text-anchor="middle">' + v.weight_kg + '</text>');
+            });
+
+            var svg = '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" style="width:100%;height:auto;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:16px;">';
+            // Grid lines
+            for (var g = 0; g <= 4; g++) {
+                var gy = padT + (g / 4) * chartH;
+                var gval = (maxW - (g / 4) * rangeW).toFixed(1);
+                svg += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (svgW - padR) + '" y2="' + gy + '" stroke="#e2e8f0" stroke-width="1" />';
+                svg += '<text x="' + (padL - 5) + '" y="' + (gy + 4) + '" font-size="10" fill="#64748b" text-anchor="end">' + gval + 'kg</text>';
             }
-            if (w != null) prev = w;
-            var pct = (w != null && maxW > 0) ? Math.max(6, Math.round((w / maxW) * 100)) : 0;
-            return '<div style="margin-bottom:10px;">' +
-                '<div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:3px;">' +
-                '<span>' + formatDate(v.recorded_at) + '</span>' +
-                '<span style="font-weight:700;color:#0f172a;">' + (w != null ? w + ' kg' + deltaTxt : 'not recorded') + '</span></div>' +
-                '<div style="background:#e2e8f0;border-radius:100px;height:10px;overflow:hidden;">' +
-                '<div style="background:linear-gradient(90deg,#1e3a8a,#3b82f6);height:100%;width:' + pct + '%;border-radius:100px;"></div></div>' +
-                '</div>';
-        }).join('');
+            // Line
+            if (points.length > 1) {
+                svg += '<polyline points="' + points.join(' ') + '" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linejoin="round" />';
+            }
+            // Points
+            points.forEach(function(p) {
+                var coords = p.split(',');
+                svg += '<circle cx="' + coords[0] + '" cy="' + coords[1] + '" r="4.5" fill="#1e3a8a" stroke="#fff" stroke-width="1.5" />';
+            });
+            svg += labels.join('');
+            svg += '</svg>';
+            html += svg;
+        }
 
-        // MUAC and temperature history
-        html += sectionTitle('MUAC and temperature history');
-        html += chrono.map(function (v) {
-            var ev = evaluateMUAC(v.muac_mm);
-            return '<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px dashed #e2e8f0;font-size:12px;">' +
-                '<span style="color:#64748b;">' + formatDate(v.recorded_at) + '</span>' +
-                '<span style="font-weight:600;color:#0f172a;">MUAC ' + (v.muac_mm != null ? v.muac_mm : '-') + ' mm <span style="color:' + ev.color + ';">(' + ev.status + ')</span> | Temp ' + (v.temperature != null ? v.temperature : '-') + ' C</span>' +
-                '</div>';
-        }).join('');
+        // --- FULL DATA TABLE ---
+        html += sectionTitle('Complete Visit History (' + currentVitalsAll.length + ' Records)');
+        html += '<div style="overflow-x:auto;max-height:300px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;">' +
+            '<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:450px;">' +
+            '<thead style="position:sticky;top:0;background:#f1f5f9;z-index:1;">' +
+            '<tr style="color:#475569;text-align:left;">' +
+            '<th style="padding:10px 8px;border-bottom:2px solid #e2e8f0;">Date</th>' +
+            '<th style="padding:10px 8px;border-bottom:2px solid #e2e8f0;">Age</th>' +
+            '<th style="padding:10px 8px;border-bottom:2px solid #e2e8f0;">Weight</th>' +
+            '<th style="padding:10px 8px;border-bottom:2px solid #e2e8f0;">MUAC</th>' +
+            '<th style="padding:10px 8px;border-bottom:2px solid #e2e8f0;">Temp</th>' +
+            '</tr></thead><tbody>';
 
-        html += '<p style="margin-top:14px;font-size:12px;color:#64748b;">Measurements are taken by the nurse or doctor at each clinic visit. A rising weight line means your child is growing well.</p>';
+        currentVitalsAll.forEach(function(v) {
+            var vMuacEv = evaluateMUAC(v.muac_mm);
+            var ageAtVisit = currentPatient.child_dob ? calculateAgeAtDate(currentPatient.child_dob, v.recorded_at) : '-';
+            var tempColor = '#0f172a';
+            if (v.temperature != null && v.temperature >= 37.5) tempColor = '#ef4444';
+
+            html += '<tr style="border-bottom:1px solid #e2e8f0;background:#fff;">';
+            html += '<td style="padding:10px 8px;color:#0f172a;font-weight:600;">' + formatDate(v.recorded_at) + '</td>';
+            html += '<td style="padding:10px 8px;color:#64748b;">' + ageAtVisit + '</td>';
+            html += '<td style="padding:10px 8px;font-weight:600;">' + (v.weight_kg != null ? v.weight_kg + ' kg' : '-') + '</td>';
+            html += '<td style="padding:10px 8px;color:' + vMuacEv.color + ';font-weight:700;">' + (v.muac_mm != null ? v.muac_mm + ' mm' : '-') + '</td>';
+            html += '<td style="padding:10px 8px;color:' + tempColor + ';font-weight:' + (tempColor === '#ef4444' ? '700' : '400') + ';">' + (v.temperature != null ? v.temperature + ' °C' : '-') + '</td>';
+            html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+
+        html += '<p style="margin-top:16px;font-size:12px;color:#64748b;line-height:1.5;">Measurements are taken by the nurse or doctor at each clinic visit. A rising weight line and green MUAC readings mean your child is growing well. Red temperatures indicate fever.</p>';
 
         showModal('Growth Chart', html);
     };
@@ -509,7 +592,6 @@
         showModal('Visit History', content);
     };
 
-    // COMBINED SCHEDULE: mother ANC contacts + child immunizations
     window.viewFullSchedule = function () {
         if (!currentPatient) return;
         var html = '';
