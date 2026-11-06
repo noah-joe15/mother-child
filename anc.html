@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANC Clinic - MNH RCH</title>
+    <link rel="stylesheet" href="/style.css?v=6">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #ef4444;
+            --bg-ivory: #FFFFF0;
+            --bg-cream: #FDF5E6;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 12px rgba(30, 58, 138, 0.08);
+            --shadow-lg: 0 12px 32px rgba(30, 58, 138, 0.12);
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-ivory) 0%, var(--bg-cream) 100%);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            padding: 16px 0;
+        }
+
+        .logo-mark {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .logo-text span {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: 1.5px solid var(--border);
+            color: var(--text-dark);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .btn-logout:hover {
+            background: #fee2e2;
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .page-header { margin-bottom: 32px; }
+        .page-header h1 { font-size: 32px; font-weight: 800; color: var(--text-dark); margin-bottom: 8px; letter-spacing: -0.02em; }
+        .page-header p { color: var(--text-muted); font-size: 16px; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px 16px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-number { font-size: 32px; font-weight: 800; margin-bottom: 6px; line-height: 1; }
+        .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat-card.active .stat-number { color: var(--primary-light); }
+        .stat-card.today .stat-number { color: var(--success); }
+        .stat-card.overdue .stat-number { color: var(--danger); }
+        .stat-card.month .stat-number { color: var(--warning); }
+
+        .form-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 28px;
+            box-shadow: var(--shadow);
+        }
+
+        .form-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .form-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+
+        .form-title { font-size: 20px; font-weight: 700; color: var(--text-dark); margin: 0; }
+
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        .form-grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .form-grid-4 { grid-template-columns: repeat(4, 1fr); }
+        .full-width { grid-column: 1 / -1; }
+
+        .form-group { margin-bottom: 4px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-dark); margin-bottom: 6px; }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 14px;
+            color: var(--text-dark);
+            background: #f8fafc;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary-light);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .check-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+            cursor: pointer;
+        }
+
+        .check-row input { width: 16px; height: 16px; accent-color: var(--primary); }
+
+        .couns-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; }
+
+        .btn-check {
+            padding: 10px 18px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn-check:hover { background: var(--primary-light); }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .lookup-banner {
+            display: none;
+            margin-top: 14px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.6;
+        }
+
+        .lookup-banner.found { display: block; background: #dcfce7; border: 1.5px solid #86efac; color: #166534; }
+        .lookup-banner.notfound { display: block; background: #f1f5f9; border: 1.5px solid #e2e8f0; color: #475569; }
+        .lookup-banner.error { display: block; background: #fee2e2; border: 1.5px solid #fca5a5; color: #991b1b; }
+
+        .chip {
+            display: inline-block;
+            padding: 5px 10px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e3a8a;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 0 6px 6px 0;
+        }
+
+        .chip.warn { background: #fef3c7; border-color: #fcd34d; color: #92400e; }
+        .chip.ok { background: #dcfce7; border-color: #86efac; color: #166534; }
+        .chip.bad { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
+
+        .sched-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: #f8fafc;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border: 1.5px solid transparent;
+            flex-wrap: wrap;
+        }
+
+        .sched-row.done { border-color: #86efac; background: #f0fdf4; }
+        .sched-row.due { border-color: #bfdbfe; background: #eff6ff; }
+        .sched-row.overdue { border-color: #fca5a5; background: #fef2f2; }
+
+        .sched-title { font-size: 14px; font-weight: 700; color: var(--text-dark); }
+        .sched-meta { font-size: 12px; color: var(--text-muted); }
+
+        .sched-btn {
+            padding: 8px 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .anc-shelf {
+            max-height: 360px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+
+        .anc-shelf::-webkit-scrollbar { width: 8px; }
+        .anc-shelf::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+        .anc-shelf::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+
+        .patient-item {
+            padding: 14px 18px;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            border: 1.5px solid transparent;
+        }
+
+        .patient-item:hover { background: white; border-color: var(--primary-light); box-shadow: var(--shadow); }
+        .patient-item h4 { font-size: 15px; font-weight: 700; color: var(--text-dark); margin: 0 0 4px 0; }
+        .patient-item p { font-size: 12px; color: var(--text-muted); margin: 0; }
+        .patient-meta { text-align: right; font-size: 12px; color: var(--text-dark); font-weight: 600; }
+        .patient-meta small { display: block; color: var(--text-muted); font-weight: 500; }
+
+        .loading-skeleton {
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 8px;
+            height: 20px;
+            margin-bottom: 12px;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        @media (max-width: 768px) {
+            .form-grid, .form-grid-3, .form-grid-4 { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .couns-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container nav-inner" style="display:flex; justify-content:space-between; align-items:center;">
+            <a href="nurse.html" class="logo" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
+                <div class="logo-mark">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 24px; height: 24px;"><path d="M12 2v20M2 12h20"/></svg>
+                </div>
+                <div class="logo-text">MNH RCH <span>ANC Clinic</span></div>
+            </a>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span id="user_info" style="font-size: 14px; font-weight: 600; color: var(--text-dark);">Loading...</span>
+                <a href="nurse.html" class="btn-logout">Nurse Station</a>
+                <button onclick="handleLogout()" class="btn-logout">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container" style="padding: 40px 20px; max-width: 1100px;">
+
+        <div id="loading_message" style="text-align: center; padding: 80px 20px;">
+            <div class="loading-skeleton" style="max-width: 300px; margin: 0 auto 16px;"></div>
+            <div class="loading-skeleton" style="max-width: 200px; margin: 0 auto;"></div>
+        </div>
+
+        <div id="anc_content" style="display: none;">
+
+            <div class="page-header">
+                <h1>Antenatal Care Clinic</h1>
+                <p>Minimum eight contacts per the Tanzania National ANC Guidelines 2018 (WHO 2016 model)</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card active">
+                    <div class="stat-number" id="stat_active">0</div>
+                    <div class="stat-label">Active Pregnancies</div>
+                </div>
+                <div class="stat-card today">
+                    <div class="stat-number" id="stat_today">0</div>
+                    <div class="stat-label">Contacts Today</div>
+                </div>
+                <div class="stat-card overdue">
+                    <div class="stat-number" id="stat_overdue">0</div>
+                    <div class="stat-label">Overdue Contacts</div>
+                </div>
+                <div class="stat-card month">
+                    <div class="stat-number" id="stat_month">0</div>
+                    <div class="stat-label">Enrolled This Month</div>
+                </div>
+            </div>
+
+            <!-- Find / Enroll -->
+            <div class="form-card">
+                <div class="form-header">
+                    <div class="form-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 22px; height: 22px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    </div>
+                    <h2 class="form-title">Find Mother / Enroll Pregnancy</h2>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <input type="tel" id="anc_phone" placeholder="Mother phone number e.g. 0712345678" style="flex:1; padding: 12px 16px; font-size: 15px; background:#f8fafc; border:1.5px solid var(--border); border-radius:10px; outline:none; font-family:'Inter',sans-serif;">
+                    <button type="button" class="btn-check" id="anc_check_btn">Check</button>
+                </div>
+                <div id="anc_lookup_status" class="lookup-banner"></div>
+                <div id="mother_box" style="display:none; margin-top: 16px;"></div>
+            </div>
+
+            <!-- Schedule -->
+            <div class="form-card" id="schedule_card" style="display: none;">
+                <div class="form-header">
+                    <div class="form-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 22px; height: 22px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </div>
+                    <h2 class="form-title" id="schedule_title">Contact Schedule</h2>
+                </div>
+                <div id="schedule_summary" style="margin-bottom: 14px;"></div>
+                <div id="schedule_list"></div>
+            </div>
+
+            <!-- Enrollment form -->
+            <div class="form-card" id="enroll_card" style="display: none;">
+                <div class="form-header">
+                    <div class="form-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 22px; height: 22px;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                    </div>
+                    <h2 class="form-title">New ANC Enrollment (First Contact, before 12 weeks ideal)</h2>
+                </div>
+                <form id="enroll_form">
+                    <div class="form-grid form-grid-3">
+                        <div class="form-group">
+                            <label>Last Normal Menstrual Period (LMP) *</label>
+                            <input type="date" id="en_lmp" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Expected Date of Delivery (auto)</label>
+                            <input type="date" id="en_edd" readonly style="background:#eef2ff; color:#3730a3;">
+                        </div>
+                        <div class="form-group">
+                            <label>Gestational Age Today (auto)</label>
+                            <input type="text" id="en_ga" readonly style="background:#eef2ff; color:#3730a3;">
+                        </div>
+                        <div class="form-group">
+                            <label>Gravida</label>
+                            <input type="number" id="en_gravida" placeholder="e.g. 2">
+                        </div>
+                        <div class="form-group">
+                            <label>Para</label>
+                            <input type="number" id="en_para" placeholder="e.g. 1">
+                        </div>
+                        <div class="form-group">
+                            <label>Abortions</label>
+                            <input type="number" id="en_abortions" placeholder="e.g. 0">
+                        </div>
+                        <div class="form-group">
+                            <label>Blood Group</label>
+                            <select id="en_blood">
+                                <option value="">Unknown</option>
+                                <option>A</option><option>B</option><option>AB</option><option>O</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Rhesus</label>
+                            <select id="en_rhesus">
+                                <option value="">Unknown</option>
+                                <option>Positive</option>
+                                <option>Negative</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Baseline Hb (g/dL)</label>
+                            <input type="number" step="0.1" id="en_hb" placeholder="e.g. 11.5">
+                        </div>
+                        <div class="form-group">
+                            <label>HIV Status at Booking</label>
+                            <select id="en_hiv">
+                                <option value="">Not yet tested</option>
+                                <option>Negative</option>
+                                <option>Positive</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Syphilis (RPR/VDRL) at Booking</label>
+                            <select id="en_syphilis">
+                                <option value="">Not yet tested</option>
+                                <option>Negative</option>
+                                <option>Positive</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit" id="enroll_submit">Enroll in ANC & Create 8-Contact Schedule</button>
+                </form>
+            </div>
+
+            <!-- Contact form -->
+            <div class="form-card" id="contact_card" style="display: none;">
+                <div class="form-header">
+                    <div class="form-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 22px; height: 22px;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    </div>
+                    <h2 class="form-title" id="contact_title">Record Contact</h2>
+                </div>
+                <div id="contact_tasks" style="margin-bottom: 14px;"></div>
+                <form id="contact_form">
+                    <div class="form-grid form-grid-4">
+                        <div class="form-group">
+                            <label>Visit Date</label>
+                            <input type="date" id="ct_date">
+                        </div>
+                        <div class="form-group">
+                            <label>Gestational Age (weeks, auto)</label>
+                            <input type="text" id="ct_ga" readonly style="background:#eef2ff; color:#3730a3;">
+                        </div>
+                        <div class="form-group">
+                            <label>BP Systolic</label>
+                            <input type="number" id="ct_bps" placeholder="120">
+                        </div>
+                        <div class="form-group">
+                            <label>BP Diastolic</label>
+                            <input type="number" id="ct_bpd" placeholder="80">
+                        </div>
+                        <div class="form-group">
+                            <label>Weight (kg)</label>
+                            <input type="number" step="0.1" id="ct_weight" placeholder="62.5">
+                        </div>
+                        <div class="form-group">
+                            <label>SFH (cm)</label>
+                            <input type="number" step="0.5" id="ct_sfh" placeholder="24">
+                        </div>
+                        <div class="form-group">
+                            <label>Foetal Heart Rate</label>
+                            <input type="number" id="ct_fhr" placeholder="140">
+                        </div>
+                        <div class="form-group">
+                            <label>Hb (g/dL)</label>
+                            <input type="number" step="0.1" id="ct_hb" placeholder="11.0">
+                        </div>
+                        <div class="form-group">
+                            <label>Lie</label>
+                            <select id="ct_lie">
+                                <option value="">Not assessed</option>
+                                <option>Longitudinal</option><option>Oblique</option><option>Transverse</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Presentation</label>
+                            <select id="ct_presentation">
+                                <option value="">Not assessed</option>
+                                <option>Cephalic</option><option>Breech</option><option>Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Urine Glucose</label>
+                            <select id="ct_glucose">
+                                <option value="">Not done</option>
+                                <option>Negative</option><option>Positive</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Urine Albumin</label>
+                            <select id="ct_albumin">
+                                <option value="">Not done</option>
+                                <option>Negative</option><option>Positive</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width" style="margin-top: 10px;">
+                        <label class="check-row"><input type="checkbox" id="ct_danger"> RAM danger signs present (bleeding, severe headache with visual disturbance, severe pallor, convulsions, fever, severe pain, severe breathing difficulty, unconscious)</label>
+                        <input type="text" id="ct_danger_note" placeholder="If yes, describe danger sign and action taken (stabilize / refer)" style="margin-top:6px;">
+                    </div>
+
+                    <div class="form-grid form-grid-4" style="margin-top: 8px;">
+                        <div class="form-group"><label class="check-row"><input type="checkbox" id="ct_msu"> MSU sent / gram stain</label></div>
+                        <div class="form-group"><label class="check-row"><input type="checkbox" id="ct_hivtest"> HIV test done</label>
+                            <select id="ct_hivresult" style="margin-top:6px;"><option value="">Result</option><option>Negative</option><option>Positive</option></select>
+                        </div>
+                        <div class="form-group"><label class="check-row"><input type="checkbox" id="ct_mrdt"> mRDT done</label>
+                            <select id="ct_mrdtresult" style="margin-top:6px;"><option value="">Result</option><option>Negative</option><option>Positive</option></select>
+                        </div>
+                        <div class="form-group"><label class="check-row"><input type="checkbox" id="ct_tb"> TB screened</label></div>
+                        <div class="form-group"><label class="check-row"><input type="checkbox" id="ct_uss"> Ultrasound done</label></div>
+                        <div class="form-group"><label class="check-row"><input type="checkbox" id="ct_meb"> Mebendazole given</label></div>
+                        <div class="form-group"><label class="check-row"><input type="checkbox" id="ct_llin"> LLIN given / counselled</label></div>
+                        <div class="form-group">
+                            <label>Tetanus Toxoid</label>
+                            <select id="ct_tt"><option value="">None today</option><option>TT1</option><option>TT2</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label>IPTp-SP dose given today</label>
+                            <select id="ct_sp"><option value="0">None</option><option value="1">Dose 1</option><option value="2">Dose 2</option><option value="3">Dose 3</option><option value="4">Dose 4</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label>IFA months dispensed</label>
+                            <input type="number" id="ct_ifa" placeholder="3">
+                        </div>
+                        <div class="form-group">
+                            <label>Next Appointment</label>
+                            <input type="date" id="ct_next">
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width" style="margin-top: 8px;">
+                        <label>Counselling given today</label>
+                        <div class="couns-grid">
+                            <label class="check-row"><input type="checkbox" class="ct_couns" value="Nutrition & physical activity"> Nutrition & physical activity</label>
+                            <label class="check-row"><input type="checkbox" class="ct_couns" value="Danger signs"> Danger signs</label>
+                            <label class="check-row"><input type="checkbox" class="ct_couns" value="Birth & emergency plan"> Birth & emergency plan</label>
+                            <label class="check-row"><input type="checkbox" class="ct_couns" value="LLIN & malaria prevention"> LLIN & malaria prevention</label>
+                            <label class="check-row"><input type="checkbox" class="ct_couns" value="Family planning & dual protection"> Family planning & dual protection</label>
+                            <label class="check-row"><input type="checkbox" class="ct_couns" value="Newborn care & breastfeeding"> Newborn care & breastfeeding</label>
+                            <label class="check-row"><input type="checkbox" class="ct_couns" value="Postpartum care"> Postpartum care</label>
+                            <label class="check-row"><input type="checkbox" class="ct_couns" value="PMTCT (if HIV positive)"> PMTCT (if HIV positive)</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Notes</label>
+                        <textarea id="ct_notes" rows="2" placeholder="Clinical notes, referrals, problems addressed"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="contact_submit">Save Contact & Update Card</button>
+                </form>
+            </div>
+
+            <!-- Active clients -->
+            <div class="form-card">
+                <div class="form-header">
+                    <div class="form-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 22px; height: 22px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <h2 class="form-title">Active ANC Clients</h2>
+                </div>
+                <div id="anc_list" class="anc-shelf">
+                    <p style="color: var(--text-muted); text-align: center; padding: 30px; font-style: italic;">Loading active pregnancies...</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="/anc-actions.js?v=1"></script>
+</body>
+</html>
