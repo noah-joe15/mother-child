@@ -124,6 +124,12 @@
         return d.getDate() + '/' + (d.getMonth() + 1);
     }
 
+        function statCard(label, value, color) {
+        return '<div style="background:#f8fafc;padding:12px;border-radius:8px;text-align:center;flex:1;min-width:90px;">' +
+            '<div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">' + label + '</div>' +
+            '<div style="font-size:17px;font-weight:700;color:' + (color || '#0f172a') + ';margin-top:4px;">' + value + '</div></div>';
+    }
+    
     function sectionTitle(t) {
         return '<div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#64748b;margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid #e2e8f0;">' + t + '</div>';
     }
@@ -443,128 +449,160 @@
         showModal('Appointments', html);
     };
 
-    // COMPREHENSIVE GROWTH CHART (Visual Line Chart + Full Data Table)
+       // COMPREHENSIVE GROWTH CHART: mother pregnancy progress + child growth
     window.viewGrowthChart = function () {
         if (!currentPatient) return;
-        if (!currentVitalsAll || currentVitalsAll.length === 0) {
+
+        var hasChildVitals = currentVitalsAll && currentVitalsAll.length > 0;
+        var hasAncContacts = currentANC && currentANCContacts && currentANCContacts.length > 0;
+
+        if (!hasChildVitals && !hasAncContacts) {
             showModal('Growth Chart',
                 '<div style="text-align: center; padding: 20px; color: #64748b;">' +
-                '<p>No vital signs recorded yet.</p>' +
-                '<p style="font-size: 13px;">Weight, MUAC and temperature are recorded by the nurse at each clinic visit and will appear here automatically.</p>' +
+                '<p>No measurements recorded yet.</p>' +
+                '<p style="font-size: 13px;">Child weight, MUAC and temperature appear here after clinic visits. For pregnant mothers, weight, blood pressure, fundal height and baby heartbeat appear after each ANC contact.</p>' +
                 '</div>');
             return;
         }
 
-        // Chronological order (oldest to newest) for charting
-        var chrono = currentVitalsAll.slice().reverse();
-        var latest = currentVitalsAll[0]; // newest
-        var muacEval = evaluateMUAC(latest.muac_mm);
+        var html = '';
 
-        // Calculate total weight gain
-        var firstWeight = null, latestWeight = null;
-        for (var i = 0; i < chrono.length; i++) {
-            if (chrono[i].weight_kg != null) { firstWeight = chrono[i].weight_kg; break; }
-        }
-        for (var j = currentVitalsAll.length - 1; j >= 0; j--) {
-            if (currentVitalsAll[j].weight_kg != null) { latestWeight = currentVitalsAll[j].weight_kg; break; }
-        }
-        var weightGain = (firstWeight != null && latestWeight != null) ? (latestWeight - firstWeight).toFixed(2) : null;
+        // ---------- SECTION A: MOTHER PREGNANCY PROGRESS ----------
+        if (hasAncContacts) {
+            var contacts = currentANCContacts;
+            var latestC = contacts[contacts.length - 1];
+            var ga = gaWeeks(currentANC.lmp_date, new Date());
+            var bpHigh = latestC.bp_systolic != null && latestC.bp_diastolic != null && (latestC.bp_systolic > 140 || latestC.bp_diastolic > 90);
 
-        function statCard(label, value, color) {
-            return '<div style="background:#f8fafc;padding:12px;border-radius:8px;text-align:center;flex:1;min-width:100px;">' +
-                '<div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">' + label + '</div>' +
-                '<div style="font-size:18px;font-weight:700;color:' + (color || '#0f172a') + ';margin-top:4px;">' + value + '</div></div>';
-        }
+            html += sectionTitle('Mother: pregnancy progress (' + contacts.length + ' contact' + (contacts.length !== 1 ? 's' : '') + ' recorded)');
+            html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">' +
+                statCard('GA today', ga + ' wks') +
+                statCard('Latest weight', (latestC.weight_kg != null ? latestC.weight_kg + ' kg' : '-')) +
+                statCard('Latest BP', (latestC.bp_systolic && latestC.bp_diastolic ? latestC.bp_systolic + '/' + latestC.bp_diastolic : '-'), bpHigh ? '#ef4444' : '#0f172a') +
+                statCard('Baby heartbeat', (latestC.foetal_heart_rate != null ? latestC.foetal_heart_rate + ' bpm' : '-')) +
+                '</div>';
 
-        var html = '<p style="font-size:14px;font-weight:600;color:#0f172a;margin:0 0 4px 0;">' + esc(currentPatient.child_name || 'Child') + '</p>' +
-            '<p style="font-size:12px;color:#64748b;margin:0 0 16px 0;">Current Age: ' + calculateAge(currentPatient.child_dob) + '</p>' +
-            
-            '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">' +
-            statCard('Latest Weight', (latest.weight_kg != null ? latest.weight_kg + ' kg' : '-')) +
-            statCard('Total Gain', (weightGain != null ? (weightGain > 0 ? '+' : '') + weightGain + ' kg' : '-'), weightGain > 0 ? '#16a34a' : '#0f172a') +
-            statCard('Latest MUAC', (latest.muac_mm != null ? latest.muac_mm + ' mm' : '-'), muacEval.color) +
-            statCard('Latest Temp', (latest.temperature != null ? latest.temperature + ' °C' : '-')) +
-            '</div>';
-
-        // --- SVG LINE CHART FOR WEIGHT ---
-        var weights = chrono.filter(function(v) { return v.weight_kg != null; });
-        if (weights.length > 0) {
-            html += sectionTitle('Weight Progression Over Time');
-            
-            var svgW = 500, svgH = 220;
-            var padL = 40, padR = 10, padT = 20, padB = 40;
-            var chartW = svgW - padL - padR;
-            var chartH = svgH - padT - padB;
-
-            var minW = Math.min.apply(null, weights.map(function(v) { return v.weight_kg; }));
-            var maxW = Math.max.apply(null, weights.map(function(v) { return v.weight_kg; }));
-            if (minW === maxW) { minW -= 1; maxW += 1; }
-            var rangeW = maxW - minW;
-
-            var points = [];
-            var labels = [];
-            
-            weights.forEach(function(v, i) {
-                var x = padL + (weights.length === 1 ? chartW / 2 : (i / (weights.length - 1)) * chartW);
-                var y = padT + chartH - ((v.weight_kg - minW) / rangeW) * chartH;
-                points.push(x + ',' + y);
-
-                labels.push('<text x="' + x + '" y="' + (svgH - 5) + '" font-size="10" fill="#64748b" text-anchor="middle">' + formatShortDate(v.recorded_at) + '</text>');
-                labels.push('<text x="' + x + '" y="' + (y - 8) + '" font-size="11" font-weight="bold" fill="#1e3a8a" text-anchor="middle">' + v.weight_kg + '</text>');
-            });
-
-            var svg = '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" style="width:100%;height:auto;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:16px;">';
-            // Grid lines
-            for (var g = 0; g <= 4; g++) {
-                var gy = padT + (g / 4) * chartH;
-                var gval = (maxW - (g / 4) * rangeW).toFixed(1);
-                svg += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (svgW - padR) + '" y2="' + gy + '" stroke="#e2e8f0" stroke-width="1" />';
-                svg += '<text x="' + (padL - 5) + '" y="' + (gy + 4) + '" font-size="10" fill="#64748b" text-anchor="end">' + gval + 'kg</text>';
+            // Maternal weight trend bars
+            var cw = contacts.filter(function (c) { return c.weight_kg != null; });
+            if (cw.length > 0) {
+                var maxCW = 0;
+                cw.forEach(function (c) { if (c.weight_kg > maxCW) maxCW = c.weight_kg; });
+                html += '<div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:6px;">Maternal weight trend</div>';
+                var prevW = null;
+                html += cw.map(function (c) {
+                    var d = '';
+                    if (prevW != null) {
+                        var diff = Math.round((c.weight_kg - prevW) * 100) / 100;
+                        d = diff >= 0 ? ' (+' + diff + ' kg)' : ' (' + diff + ' kg)';
+                    }
+                    prevW = c.weight_kg;
+                    var pct = maxCW > 0 ? Math.max(6, Math.round((c.weight_kg / maxCW) * 100)) : 6;
+                    return '<div style="margin-bottom:8px;">' +
+                        '<div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:3px;">' +
+                        '<span>Contact ' + c.contact_number + ' &middot; ' + formatDate(c.visit_date) + (c.ga_weeks != null ? ' (' + c.ga_weeks + ' wks)' : '') + '</span>' +
+                        '<span style="font-weight:700;color:#0f172a;">' + c.weight_kg + ' kg' + d + '</span></div>' +
+                        '<div style="background:#e2e8f0;border-radius:100px;height:8px;overflow:hidden;"><div style="background:linear-gradient(90deg,#16a34a,#22c55e);height:100%;width:' + pct + '%;border-radius:100px;"></div></div></div>';
+                }).join('');
             }
-            // Line
-            if (points.length > 1) {
-                svg += '<polyline points="' + points.join(' ') + '" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linejoin="round" />';
-            }
-            // Points
-            points.forEach(function(p) {
-                var coords = p.split(',');
-                svg += '<circle cx="' + coords[0] + '" cy="' + coords[1] + '" r="4.5" fill="#1e3a8a" stroke="#fff" stroke-width="1.5" />';
-            });
-            svg += labels.join('');
-            svg += '</svg>';
-            html += svg;
+
+            // BP, SFH, foetal heart table
+            html += '<div style="overflow-x:auto;margin-top:10px;border:1px solid #e2e8f0;border-radius:8px;">' +
+                '<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:420px;">' +
+                '<thead style="background:#f1f5f9;"><tr style="color:#475569;text-align:left;">' +
+                '<th style="padding:8px;border-bottom:2px solid #e2e8f0;">Contact</th>' +
+                '<th style="padding:8px;border-bottom:2px solid #e2e8f0;">Date</th>' +
+                '<th style="padding:8px;border-bottom:2px solid #e2e8f0;">BP</th>' +
+                '<th style="padding:8px;border-bottom:2px solid #e2e8f0;">SFH</th>' +
+                '<th style="padding:8px;border-bottom:2px solid #e2e8f0;">Foetal HR</th>' +
+                '</tr></thead><tbody>' +
+                contacts.slice().reverse().map(function (c) {
+                    var high = c.bp_systolic != null && c.bp_diastolic != null && (c.bp_systolic > 140 || c.bp_diastolic > 90);
+                    return '<tr style="border-bottom:1px solid #e2e8f0;background:#fff;">' +
+                        '<td style="padding:8px;font-weight:600;">' + c.contact_number + '</td>' +
+                        '<td style="padding:8px;">' + formatDate(c.visit_date) + '</td>' +
+                        '<td style="padding:8px;color:' + (high ? '#ef4444' : '#0f172a') + ';font-weight:' + (high ? '700' : '400') + ';">' + (c.bp_systolic && c.bp_diastolic ? c.bp_systolic + '/' + c.bp_diastolic : '-') + '</td>' +
+                        '<td style="padding:8px;">' + (c.sfh_cm != null ? c.sfh_cm + ' cm' : '-') + '</td>' +
+                        '<td style="padding:8px;">' + (c.foetal_heart_rate != null ? c.foetal_heart_rate + ' bpm' : '-') + '</td>' +
+                        '</tr>';
+                }).join('') +
+                '</tbody></table></div>' +
+                '<p style="margin-top:8px;font-size:11px;color:#64748b;">A red BP reading means above 140/90 - report to the clinic immediately.</p>';
         }
 
-        // --- FULL DATA TABLE ---
-        html += sectionTitle('Complete Visit History (' + currentVitalsAll.length + ' Records)');
-        html += '<div style="overflow-x:auto;max-height:300px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;">' +
-            '<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:450px;">' +
-            '<thead style="position:sticky;top:0;background:#f1f5f9;z-index:1;">' +
-            '<tr style="color:#475569;text-align:left;">' +
-            '<th style="padding:10px 8px;border-bottom:2px solid #e2e8f0;">Date</th>' +
-            '<th style="padding:10px 8px;border-bottom:2px solid #e2e8f0;">Age</th>' +
-            '<th style="padding:10px 8px;border-bottom:2px solid #e2e8f0;">Weight</th>' +
-            '<th style="padding:10px 8px;border-bottom:2px solid #e2e8f0;">MUAC</th>' +
-            '<th style="padding:10px 8px;border-bottom:2px solid #e2e8f0;">Temp</th>' +
-            '</tr></thead><tbody>';
+        // ---------- SECTION B: CHILD GROWTH ----------
+        if (hasChildVitals) {
+            var chrono = currentVitalsAll.slice().reverse();
+            var latest = currentVitalsAll[0];
+            var muacEval = evaluateMUAC(latest.muac_mm);
 
-        currentVitalsAll.forEach(function(v) {
-            var vMuacEv = evaluateMUAC(v.muac_mm);
-            var ageAtVisit = currentPatient.child_dob ? calculateAgeAtDate(currentPatient.child_dob, v.recorded_at) : '-';
-            var tempColor = '#0f172a';
-            if (v.temperature != null && v.temperature >= 37.5) tempColor = '#ef4444';
+            var firstWeight = null, latestWeight = null;
+            for (var i = 0; i < chrono.length; i++) { if (chrono[i].weight_kg != null) { firstWeight = chrono[i].weight_kg; break; } }
+            for (var j = currentVitalsAll.length - 1; j >= 0; j--) { if (currentVitalsAll[j].weight_kg != null) { latestWeight = currentVitalsAll[j].weight_kg; break; } }
+            var weightGain = (firstWeight != null && latestWeight != null) ? (latestWeight - firstWeight).toFixed(2) : null;
 
-            html += '<tr style="border-bottom:1px solid #e2e8f0;background:#fff;">';
-            html += '<td style="padding:10px 8px;color:#0f172a;font-weight:600;">' + formatDate(v.recorded_at) + '</td>';
-            html += '<td style="padding:10px 8px;color:#64748b;">' + ageAtVisit + '</td>';
-            html += '<td style="padding:10px 8px;font-weight:600;">' + (v.weight_kg != null ? v.weight_kg + ' kg' : '-') + '</td>';
-            html += '<td style="padding:10px 8px;color:' + vMuacEv.color + ';font-weight:700;">' + (v.muac_mm != null ? v.muac_mm + ' mm' : '-') + '</td>';
-            html += '<td style="padding:10px 8px;color:' + tempColor + ';font-weight:' + (tempColor === '#ef4444' ? '700' : '400') + ';">' + (v.temperature != null ? v.temperature + ' °C' : '-') + '</td>';
-            html += '</tr>';
-        });
-        html += '</tbody></table></div>';
+            html += sectionTitle('Child: growth monitoring (' + currentVitalsAll.length + ' record' + (currentVitalsAll.length !== 1 ? 's' : '') + ')');
+            html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">' +
+                statCard('Latest weight', (latest.weight_kg != null ? latest.weight_kg + ' kg' : '-')) +
+                statCard('Total gain', (weightGain != null ? (weightGain > 0 ? '+' : '') + weightGain + ' kg' : '-'), weightGain > 0 ? '#16a34a' : '#0f172a') +
+                statCard('Latest MUAC', (latest.muac_mm != null ? latest.muac_mm + ' mm' : '-'), muacEval.color) +
+                statCard('Latest temp', (latest.temperature != null ? latest.temperature + ' C' : '-')) +
+                '</div>';
 
-        html += '<p style="margin-top:16px;font-size:12px;color:#64748b;line-height:1.5;">Measurements are taken by the nurse or doctor at each clinic visit. A rising weight line and green MUAC readings mean your child is growing well. Red temperatures indicate fever.</p>';
+            var weights = chrono.filter(function (v) { return v.weight_kg != null; });
+            if (weights.length > 0) {
+                var svgW = 500, svgH = 220, padL = 40, padR = 10, padT = 20, padB = 40;
+                var chartW = svgW - padL - padR, chartH = svgH - padT - padB;
+                var minW = Math.min.apply(null, weights.map(function (v) { return v.weight_kg; }));
+                var maxW = Math.max.apply(null, weights.map(function (v) { return v.weight_kg; }));
+                if (minW === maxW) { minW -= 1; maxW += 1; }
+                var rangeW = maxW - minW;
+                var points = [], labels = [];
+                weights.forEach(function (v, idx) {
+                    var x = padL + (weights.length === 1 ? chartW / 2 : (idx / (weights.length - 1)) * chartW);
+                    var y = padT + chartH - ((v.weight_kg - minW) / rangeW) * chartH;
+                    points.push(x + ',' + y);
+                    labels.push('<text x="' + x + '" y="' + (svgH - 5) + '" font-size="10" fill="#64748b" text-anchor="middle">' + formatShortDate(v.recorded_at) + '</text>');
+                    labels.push('<text x="' + x + '" y="' + (y - 8) + '" font-size="11" font-weight="bold" fill="#1e3a8a" text-anchor="middle">' + v.weight_kg + '</text>');
+                });
+                var svg = '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" style="width:100%;height:auto;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:12px;">';
+                for (var g = 0; g <= 4; g++) {
+                    var gy = padT + (g / 4) * chartH;
+                    var gval = (maxW - (g / 4) * rangeW).toFixed(1);
+                    svg += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (svgW - padR) + '" y2="' + gy + '" stroke="#e2e8f0" stroke-width="1" />';
+                    svg += '<text x="' + (padL - 5) + '" y="' + (gy + 4) + '" font-size="10" fill="#64748b" text-anchor="end">' + gval + 'kg</text>';
+                }
+                if (points.length > 1) svg += '<polyline points="' + points.join(' ') + '" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linejoin="round" />';
+                points.forEach(function (p) {
+                    var co = p.split(',');
+                    svg += '<circle cx="' + co[0] + '" cy="' + co[1] + '" r="4.5" fill="#1e3a8a" stroke="#fff" stroke-width="1.5" />';
+                });
+                svg += labels.join('') + '</svg>';
+                html += svg;
+            }
+
+            html += '<div style="overflow-x:auto;max-height:260px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;">' +
+                '<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:420px;">' +
+                '<thead style="position:sticky;top:0;background:#f1f5f9;"><tr style="color:#475569;text-align:left;">' +
+                '<th style="padding:8px;border-bottom:2px solid #e2e8f0;">Date</th>' +
+                '<th style="padding:8px;border-bottom:2px solid #e2e8f0;">Age</th>' +
+                '<th style="padding:8px;border-bottom:2px solid #e2e8f0;">Weight</th>' +
+                '<th style="padding:8px;border-bottom:2px solid #e2e8f0;">MUAC</th>' +
+                '<th style="padding:8px;border-bottom:2px solid #e2e8f0;">Temp</th>' +
+                '</tr></thead><tbody>' +
+                currentVitalsAll.map(function (v) {
+                    var vEv = evaluateMUAC(v.muac_mm);
+                    var ageAt = currentPatient.child_dob ? calculateAgeAtDate(currentPatient.child_dob, v.recorded_at) : '-';
+                    var tColor = (v.temperature != null && v.temperature >= 37.5) ? '#ef4444' : '#0f172a';
+                    return '<tr style="border-bottom:1px solid #e2e8f0;background:#fff;">' +
+                        '<td style="padding:8px;font-weight:600;">' + formatDate(v.recorded_at) + '</td>' +
+                        '<td style="padding:8px;color:#64748b;">' + ageAt + '</td>' +
+                        '<td style="padding:8px;font-weight:600;">' + (v.weight_kg != null ? v.weight_kg + ' kg' : '-') + '</td>' +
+                        '<td style="padding:8px;color:' + vEv.color + ';font-weight:700;">' + (v.muac_mm != null ? v.muac_mm + ' mm' : '-') + '</td>' +
+                        '<td style="padding:8px;color:' + tColor + ';">' + (v.temperature != null ? v.temperature + ' C' : '-') + '</td>' +
+                        '</tr>';
+                }).join('') +
+                '</tbody></table></div>';
+        }
 
         showModal('Growth Chart', html);
     };
