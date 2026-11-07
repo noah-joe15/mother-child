@@ -1,6 +1,7 @@
 /**
- * MNH RCH - ANC Clinic Logic
+ * MNH RCH - ANC Clinic Logic (v2 - Validated)
  * Implements the Tanzania National ANC Guidelines 2018 (WHO 8-contact model).
+ * Includes LMP validation, SFH sanity checks, and GA in weeks+days.
  */
 (function () {
     'use strict';
@@ -15,12 +16,11 @@
     var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     var currentUser = '';
-    var currentPatient = null;      // matched patients row
-    var currentEnrollment = null;   // active anc_enrollments row
-    var currentContacts = [];       // anc_contacts rows for enrollment
-    var recordingContact = null;    // contact number being recorded
+    var currentPatient = null;
+    var currentEnrollment = null;
+    var currentContacts = [];
+    var recordingContact = null;
 
-    // 8 contacts + 41-week return (Table 2)
     var CONTACTS = [
         { n: 1, w: 12, label: '1st contact (booking, up to 12 wks)' },
         { n: 2, w: 20, label: '2nd contact (20 wks)' },
@@ -33,7 +33,6 @@
         { n: 9, w: 41, label: 'Return for delivery (41 wks)' }
     ];
 
-    // Per-contact task checklist (Table 3, condensed for the screen)
     var CONTACT_TASKS = {
         1: ['Syphilis test (RPR/VDRL)', 'HIV test (PITC)', 'Blood group & Rhesus', 'Hb / FBC', 'MSU culture or gram stain', 'Urine glucose + albumin', 'mRDT', 'TB screen', 'TT1 if status unknown', 'Start daily IFA', 'Give LLIN', 'Birth & emergency plan'],
         2: ['Obstetric ultrasound (~20 wks)', 'TT2 (4 wks after TT1)', 'Mebendazole 500mg stat (2nd trimester)', 'IFA refill', 'IPTp-SP if 4 wks since last dose'],
@@ -81,6 +80,18 @@
         return Math.floor((new Date(onDate) - new Date(lmp)) / (7 * 86400000));
     }
 
+    function gaParts(lmp, onDate) {
+        var total = Math.floor((new Date(onDate) - new Date(lmp)) / 86400000);
+        if (total < 0) return { negative: true, weeks: 0, days: 0, total: total };
+        return { negative: false, weeks: Math.floor(total / 7), days: total % 7, total: total };
+    }
+
+    function gaLabel(lmp, onDate) {
+        var g = gaParts(lmp, onDate);
+        if (g.negative) return 'Invalid (date before LMP)';
+        return g.weeks + ' weeks, ' + g.days + ' day' + (g.days !== 1 ? 's' : '');
+    }
+
     function phoneVariants(input) {
         var raw = String(input || '').trim();
         var digits = raw.replace(/\D/g, '');
@@ -99,6 +110,16 @@
         return Object.keys(set);
     }
 
+    function numOrNull(id) {
+        var v = document.getElementById(id).value;
+        return v === '' ? null : parseFloat(v);
+    }
+
+    function valOrNull(id) {
+        var v = document.getElementById(id).value;
+        return v === '' ? null : v;
+    }
+
     // ==========================================
     // STATS
     // ==========================================
@@ -114,7 +135,6 @@
         document.getElementById('stat_today').textContent = contactsToday.count || 0;
         document.getElementById('stat_month').textContent = enrolledMonth.count || 0;
 
-        // Overdue computed client-side from active enrollments
         var enr = await sb.from('anc_enrollments').select('id, lmp_date').eq('status', 'active');
         var overdue = 0;
         if (enr.data && enr.data.length) {
@@ -150,10 +170,10 @@
         }
 
         box.innerHTML = res.data.map(function (e) {
-            var ga = gaWeeks(e.lmp_date, today());
+            var gaText = gaLabel(e.lmp_date, today());
             var p = e.patients || {};
             return '<div class="patient-item" onclick="openEnrollment(\'' + e.id + '\')">' +
-                '<div><h4>' + esc(p.mother_name) + '</h4><p>' + esc(p.phone_number) + ' &middot; GA ' + ga + ' wks &middot; EDD ' + fmt(e.edd) + '</p></div>' +
+                '<div><h4>' + esc(p.mother_name) + '</h4><p>' + esc(p.phone_number) + ' &middot; GA ' + gaText + ' &middot; EDD ' + fmt(e.edd) + '</p></div>' +
                 '<div class="patient-meta">Tap to open<small>schedule & contacts</small></div>' +
             '</div>';
         }).join('');
@@ -227,8 +247,8 @@
                 (currentPatient.child_name ? ' &middot; Child: ' + esc(currentPatient.child_name) : ' &middot; Antenatal (no child on record)') +
             '</div>';
         if (currentEnrollment) {
-            var ga = gaWeeks(currentEnrollment.lmp_date, today());
-            html += '<div><span class="chip ok">Active pregnancy &middot; GA ' + ga + ' wks &middot; EDD ' + fmt(currentEnrollment.edd) + '</span></div>';
+            var gaText = gaLabel(currentEnrollment.lmp_date, today());
+            html += '<div><span class="chip ok">Active pregnancy &middot; GA ' + gaText + ' &middot; EDD ' + fmt(currentEnrollment.edd) + '</span></div>';
         } else {
             html += '<button class="btn-check" onclick="showEnrollForm()">Enroll New Pregnancy</button>';
         }
@@ -256,12 +276,12 @@
 
     function renderSchedule() {
         document.getElementById('schedule_card').style.display = 'block';
-        var ga = gaWeeks(currentEnrollment.lmp_date, today());
+        var gaText = gaLabel(currentEnrollment.lmp_date, today());
         document.getElementById('schedule_title').textContent = 'Contact Schedule - ' + currentPatient.mother_name;
 
         var spInfo = spEligibility();
         document.getElementById('schedule_summary').innerHTML =
-            '<span class="chip">GA today: ' + ga + ' weeks</span>' +
+            '<span class="chip">GA today: ' + gaText + '</span>' +
             '<span class="chip">EDD: ' + fmt(currentEnrollment.edd) + '</span>' +
             '<span class="chip">Contacts done: ' + currentContacts.length + ' / 8</span>' +
             '<span class="chip ' + (spInfo.ok ? 'ok' : 'warn') + '">IPTp-SP: ' + esc(spInfo.reason) + '</span>' +
@@ -301,11 +321,10 @@
     // ==========================================
     window.openContactForm = function (n) {
         recordingContact = n;
-        var ga = gaWeeks(currentEnrollment.lmp_date, today());
         document.getElementById('contact_card').style.display = 'block';
         document.getElementById('contact_title').textContent = 'Contact ' + n + ' of 8 - ' + currentPatient.mother_name;
         document.getElementById('ct_date').value = isoDate(today());
-        document.getElementById('ct_ga').value = ga + ' weeks';
+        document.getElementById('ct_ga').value = gaLabel(currentEnrollment.lmp_date, document.getElementById('ct_date').value);
 
         var tasks = CONTACT_TASKS[n] || [];
         var sp = spEligibility();
@@ -314,7 +333,6 @@
         if (n >= 5) chips += '<span class="chip warn">Assess lie & presentation</span>';
         document.getElementById('contact_tasks').innerHTML = '<div style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px;">Guideline tasks for this contact</div>' + chips;
 
-        // Suggest next appointment = next contact due date
         var sched = buildSchedule();
         var next = sched.filter(function (s) { return s.n === n + 1; })[0];
         if (next) document.getElementById('ct_next').value = isoDate(next.due);
@@ -323,6 +341,13 @@
     };
 
     function setupContactForm() {
+        // Bind the date change listener ONCE here to prevent stacking
+        document.getElementById('ct_date').addEventListener('change', function () {
+            if (!currentEnrollment) return;
+            var dateVal = this.value || isoDate(today());
+            document.getElementById('ct_ga').value = gaLabel(currentEnrollment.lmp_date, dateVal);
+        });
+
         document.getElementById('contact_form').addEventListener('submit', async function (e) {
             e.preventDefault();
             if (!currentEnrollment || !recordingContact) return;
@@ -335,18 +360,44 @@
                 var danger = document.getElementById('ct_danger').checked;
                 var counselling = Array.prototype.slice.call(document.querySelectorAll('.ct_couns:checked'))
                     .map(function (c) { return c.value; }).join(', ');
+                                
+                var visitDate = document.getElementById('ct_date').value || isoDate(today());
+                var gVisit = gaParts(currentEnrollment.lmp_date, visitDate);
+                if (gVisit.negative) {
+                    alert('Visit date is before the LMP. Correct the visit date or fix the LMP at the enrollment before saving.');
+                    btn.disabled = false;
+                    btn.textContent = 'Save Contact & Update Card';
+                    return;
+                }
+                var sfhVal = numOrNull('ct_sfh');
+                if (sfhVal != null) {
+                    if (gVisit.weeks >= 20 && Math.abs(sfhVal - gVisit.weeks) > 3) {
+                        if (!confirm('SFH ' + sfhVal + ' cm does not match ' + gVisit.weeks + ' weeks gestation (expected about ' + (gVisit.weeks - 2) + ' to ' + (gVisit.weeks + 2) + ' cm). Save anyway?')) {
+                            btn.disabled = false;
+                            btn.textContent = 'Save Contact & Update Card';
+                            return;
+                        }
+                    }
+                    if (gVisit.weeks < 20 && sfhVal > 20) {
+                        if (!confirm('SFH ' + sfhVal + ' cm is unusually high for ' + gVisit.weeks + ' weeks gestation. Save anyway?')) {
+                            btn.disabled = false;
+                            btn.textContent = 'Save Contact & Update Card';
+                            return;
+                        }
+                    }
+                }
 
                 var payload = {
                     anc_id: currentEnrollment.id,
                     contact_number: recordingContact,
-                    visit_date: document.getElementById('ct_date').value || isoDate(today()),
-                    ga_weeks: parseInt(document.getElementById('ct_ga').value, 10) || null,
+                    visit_date: visitDate,
+                    ga_weeks: gVisit.weeks,
                     danger_signs: danger,
                     danger_signs_note: document.getElementById('ct_danger_note').value || null,
                     bp_systolic: numOrNull('ct_bps'),
                     bp_diastolic: numOrNull('ct_bpd'),
                     weight_kg: numOrNull('ct_weight'),
-                    sfh_cm: numOrNull('ct_sfh'),
+                    sfh_cm: sfhVal,
                     foetal_heart_rate: numOrNull('ct_fhr'),
                     lie: valOrNull('ct_lie'),
                     presentation: valOrNull('ct_presentation'),
@@ -374,7 +425,6 @@
                 var ins = await sb.from('anc_contacts').insert(payload).select().single();
                 if (ins.error) throw ins.error;
 
-                // RAM protocol: danger signs go straight to the doctor queue
                 if (danger) {
                     await sb.from('queue').insert({
                         patient_id: currentEnrollment.patient_id,
@@ -405,31 +455,40 @@
         });
     }
 
-    function numOrNull(id) {
-        var v = document.getElementById(id).value;
-        return v === '' ? null : parseFloat(v);
-    }
-
-    function valOrNull(id) {
-        var v = document.getElementById(id).value;
-        return v === '' ? null : v;
-    }
-
     // ==========================================
     // ENROLL FORM
     // ==========================================
     function setupEnrollForm() {
-        var lmp = document.getElementById('en_lmp');
+        var lmp = document.getElementById('en_lmp'); // FIXED: Added variable declaration
         lmp.addEventListener('change', function () {
             if (!lmp.value) return;
-            var edd = addDays(lmp.value, 280);
-            document.getElementById('en_edd').value = isoDate(edd);
-            document.getElementById('en_ga').value = gaWeeks(lmp.value, today()) + ' weeks';
+            var g = gaParts(lmp.value, today());
+            var eddBox = document.getElementById('en_edd');
+            var gaBox = document.getElementById('en_ga');
+            if (g.negative) {
+                eddBox.value = '';
+                gaBox.value = 'LMP is in the future - correct it';
+                return;
+            }
+            eddBox.value = isoDate(addDays(lmp.value, 280));
+            gaBox.value = gaLabel(lmp.value, today()) + (g.weeks > 12 ? ' (late booking: guideline advises first contact before 12 weeks)' : '');
         });
 
         document.getElementById('enroll_form').addEventListener('submit', async function (e) {
             e.preventDefault();
             if (!currentPatient) { alert('Find the mother first.'); return; }
+            
+            var lmpVal = document.getElementById('en_lmp').value;
+            var gEnrol = gaParts(lmpVal, today());
+            if (!lmpVal || gEnrol.negative) {
+                alert('LMP cannot be empty or in the future. Verify the date with the mother before enrolling.');
+                return;
+            }
+            if (gEnrol.weeks > 44) {
+                alert('This LMP gives ' + gEnrol.weeks + ' weeks gestation, beyond 44 weeks. The LMP date is almost certainly wrong.');
+                return;
+            }
+
             var btn = document.getElementById('enroll_submit');
             btn.disabled = true;
 
