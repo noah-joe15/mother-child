@@ -1,8 +1,9 @@
 /**
- * MNH RCH - Patient Actions & Dashboard Logic (v10)
+ * MNH RCH - Patient Actions & Dashboard Logic (v11)
  * Mother portal: identity, child profile, full growth history (with visual charts),
  * visits, immunization schedule, appointments, and the mother's
  * own ANC contacts per Tanzania National ANC Guidelines 2018.
+ * Includes clinical safety guards for GA calculation and impossible dates.
  * Wrapped in IIFE to prevent duplicate-declaration crashes.
  */
 (function () {
@@ -70,6 +71,19 @@
         return Math.floor((new Date(onDate) - new Date(lmp)) / (7 * 86400000));
     }
 
+    // NEW: Clinical precision helpers
+    function gaParts(lmp, onDate) {
+        var total = Math.floor((new Date(onDate) - new Date(lmp)) / 86400000);
+        if (total < 0) return { negative: true, weeks: 0, days: 0, total: total };
+        return { negative: false, weeks: Math.floor(total / 7), days: total % 7, total: total };
+    }
+
+    function gaLabel(lmp, onDate) {
+        var g = gaParts(lmp, onDate);
+        if (g.negative) return 'Invalid (date before LMP)';
+        return g.weeks + ' weeks, ' + g.days + ' day' + (g.days !== 1 ? 's' : '');
+    }
+
     function calculateAge(dobString) {
         if (!dobString) return 'Not recorded';
         var dob = new Date(dobString);
@@ -124,7 +138,7 @@
         return d.getDate() + '/' + (d.getMonth() + 1);
     }
 
-        function statCard(label, value, color) {
+    function statCard(label, value, color) {
         return '<div style="background:#f8fafc;padding:12px;border-radius:8px;text-align:center;flex:1;min-width:90px;">' +
             '<div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">' + label + '</div>' +
             '<div style="font-size:17px;font-weight:700;color:' + (color || '#0f172a') + ';margin-top:4px;">' + value + '</div></div>';
@@ -186,7 +200,10 @@
         }
         var h = '<div style="margin-top:8px;background:white;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;">';
         h += r('Visit date', formatDate(v.visit_date));
-        if (v.ga_weeks != null) h += r('Gestational age', v.ga_weeks + ' weeks');
+        
+        // PATCH 8: Recompute GA from LMP and visit date to override bad stored data
+        if (currentANC) h += r('Gestational age at this visit', gaLabel(currentANC.lmp_date, v.visit_date));
+        
         if (v.bp_systolic && v.bp_diastolic) h += r('Blood pressure', v.bp_systolic + '/' + v.bp_diastolic + ' mmHg');
         if (v.weight_kg != null) h += r('Weight', v.weight_kg + ' kg');
         if (v.sfh_cm != null) h += r('Fundal height (SFH)', v.sfh_cm + ' cm');
@@ -323,6 +340,14 @@
         var el = document.getElementById('next_vaccine_text');
 
         if (currentANC) {
+            // PATCH 6: Guard against impossible dates
+            var gNow = gaParts(currentANC.lmp_date, new Date());
+            if (gNow.negative || gNow.weeks > 44) {
+                if (titleEl) titleEl.textContent = 'Record Check Needed';
+                el.textContent = 'Your pregnancy dates need verification. Please visit the ANC desk so the nurse can correct your record.';
+                return;
+            }
+
             var sched = buildAncSchedule(currentANC, currentANCContacts);
             var next = sched.filter(function (s) { return s.status !== 'done' && s.n <= 8; })[0];
             if (!next) {
@@ -449,7 +474,7 @@
         showModal('Appointments', html);
     };
 
-       // COMPREHENSIVE GROWTH CHART: mother pregnancy progress + child growth
+    // COMPREHENSIVE GROWTH CHART: mother pregnancy progress + child growth
     window.viewGrowthChart = function () {
         if (!currentPatient) return;
 
@@ -471,12 +496,12 @@
         if (hasAncContacts) {
             var contacts = currentANCContacts;
             var latestC = contacts[contacts.length - 1];
-            var ga = gaWeeks(currentANC.lmp_date, new Date());
+            var gaText = gaLabel(currentANC.lmp_date, new Date()); // UPDATED to use precise label
             var bpHigh = latestC.bp_systolic != null && latestC.bp_diastolic != null && (latestC.bp_systolic > 140 || latestC.bp_diastolic > 90);
 
             html += sectionTitle('Mother: pregnancy progress (' + contacts.length + ' contact' + (contacts.length !== 1 ? 's' : '') + ' recorded)');
             html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">' +
-                statCard('GA today', ga + ' wks') +
+                statCard('GA today', gaText) +
                 statCard('Latest weight', (latestC.weight_kg != null ? latestC.weight_kg + ' kg' : '-')) +
                 statCard('Latest BP', (latestC.bp_systolic && latestC.bp_diastolic ? latestC.bp_systolic + '/' + latestC.bp_diastolic : '-'), bpHigh ? '#ef4444' : '#0f172a') +
                 statCard('Baby heartbeat', (latestC.foetal_heart_rate != null ? latestC.foetal_heart_rate + ' bpm' : '-')) +
@@ -635,10 +660,10 @@
         var html = '';
 
         if (currentANC) {
-            var ga = gaWeeks(currentANC.lmp_date, new Date());
+            var gaText = gaLabel(currentANC.lmp_date, new Date()); // UPDATED to use precise label
             html += '<div style="margin-bottom: 10px;">' +
                 '<span style="' + CHIP + 'background:#dcfce7;border-color:#86efac;color:#166534;">Pregnancy active</span>' +
-                '<span style="' + CHIP + '">GA today: ' + ga + ' weeks</span>' +
+                '<span style="' + CHIP + '">GA today: ' + gaText + '</span>' +
                 '<span style="' + CHIP + '">EDD: ' + formatDate(currentANC.edd) + '</span>' +
                 '<span style="' + CHIP + '">Contacts done: ' + currentANCContacts.length + ' of 8</span>' +
                 '</div>' +
