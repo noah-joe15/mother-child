@@ -1,5 +1,5 @@
 /**
- * MNH RCH - Patient Actions & Dashboard Logic (v12)
+ * MNH RCH - Patient Actions & Dashboard Logic (v13)
  * Mother portal: identity, child profile, full growth history (with visual charts),
  * visits, immunization schedule, appointments, and the mother's
  * own ANC contacts per Tanzania National ANC Guidelines 2018.
@@ -28,6 +28,7 @@
     var currentVitals = null;
     var currentVitalsAll = [];
     var currentVisits = [];
+    var currentDispensingRecords = []; // NEW: Stores rich dispensing data
     var currentANC = null;
     var currentANCContacts = [];
 
@@ -71,7 +72,6 @@
         return Math.floor((new Date(onDate) - new Date(lmp)) / (7 * 86400000));
     }
 
-    // NEW: Clinical precision helpers
     function gaParts(lmp, onDate) {
         var total = Math.floor((new Date(onDate) - new Date(lmp)) / 86400000);
         if (total < 0) return { negative: true, weeks: 0, days: 0, total: total };
@@ -200,10 +200,7 @@
         }
         var h = '<div style="margin-top:8px;background:white;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;">';
         h += r('Visit date', formatDate(v.visit_date));
-        
-        // PATCH 8: Recompute GA from LMP and visit date to override bad stored data
         if (currentANC) h += r('Gestational age at this visit', gaLabel(currentANC.lmp_date, v.visit_date));
-        
         if (v.bp_systolic && v.bp_diastolic) h += r('Blood pressure', v.bp_systolic + '/' + v.bp_diastolic + ' mmHg');
         if (v.weight_kg != null) h += r('Weight', v.weight_kg + ' kg');
         if (v.sfh_cm != null) h += r('Fundal height (SFH)', v.sfh_cm + ' cm');
@@ -265,7 +262,6 @@
             }
             currentPatient = res.data[0];
 
-            // Identity source of truth is the database row, never localStorage
             var trueName = currentPatient.mother_name || name || 'Mother';
             var truePhone = currentPatient.phone_number || phone;
             document.getElementById('user_name').textContent = trueName;
@@ -279,14 +275,12 @@
             if (sideName) sideName.textContent = trueName;
             if (sidePhone) sidePhone.textContent = truePhone;
 
-            // Child profile
             document.getElementById('child_name').textContent = currentPatient.child_name || 'Unborn / Not Recorded';
             var age = calculateAge(currentPatient.child_dob);
             var dobF = currentPatient.child_dob ? formatDate(currentPatient.child_dob) : 'Not recorded';
             document.getElementById('child_dob').textContent = currentPatient.child_dob ? dobF + ' (' + age + ')' : 'Not recorded';
             document.getElementById('child_sex').textContent = currentPatient.child_sex || 'Not recorded';
 
-            // Full vitals history (newest first, up to 100 records for full growth chart)
             var vRes = await supabase.from('vitals')
                 .select('muac_mm, weight_kg, temperature, recorded_at')
                 .eq('patient_id', currentPatient.id)
@@ -305,16 +299,21 @@
                 badge.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 12px; height: 12px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Pending Assessment';
             }
 
-            // Visit history
             var qRes = await supabase.from('queue')
                 .select('id, status, current_station, created_at, diagnosis, prescription')
                 .eq('patient_id', currentPatient.id)
                 .order('created_at', { ascending: false })
-                .limit(10); // Increased limit to ensure we catch recent prescriptions
+                .limit(10);
             currentVisits = qRes.data || [];
             renderActivityList(currentVisits);
 
-            // ANC enrollment + contacts (read-only for the mother)
+            // NEW: Fetch rich dispensing records
+            var dRes = await supabase.from('dispensing')
+                .select('*')
+                .eq('patient_id', currentPatient.id)
+                .order('created_at', { ascending: false });
+            currentDispensingRecords = dRes.data || [];
+
             try {
                 var aRes = await supabase.from('anc_enrollments').select('*').eq('patient_id', currentPatient.id).eq('status', 'active').order('enrolled_at', { ascending: false }).limit(1);
                 currentANC = (aRes.data && aRes.data[0]) || null;
@@ -340,7 +339,6 @@
         var el = document.getElementById('next_vaccine_text');
 
         if (currentANC) {
-            // PATCH 6: Guard against impossible dates
             var gNow = gaParts(currentANC.lmp_date, new Date());
             if (gNow.negative || gNow.weeks > 44) {
                 if (titleEl) titleEl.textContent = 'Record Check Needed';
@@ -474,7 +472,6 @@
         showModal('Appointments', html);
     };
 
-    // COMPREHENSIVE GROWTH CHART: mother pregnancy progress + child growth
     window.viewGrowthChart = function () {
         if (!currentPatient) return;
 
@@ -492,11 +489,10 @@
 
         var html = '';
 
-        // ---------- SECTION A: MOTHER PREGNANCY PROGRESS ----------
         if (hasAncContacts) {
             var contacts = currentANCContacts;
             var latestC = contacts[contacts.length - 1];
-            var gaText = gaLabel(currentANC.lmp_date, new Date()); // UPDATED to use precise label
+            var gaText = gaLabel(currentANC.lmp_date, new Date());
             var bpHigh = latestC.bp_systolic != null && latestC.bp_diastolic != null && (latestC.bp_systolic > 140 || latestC.bp_diastolic > 90);
 
             html += sectionTitle('Mother: pregnancy progress (' + contacts.length + ' contact' + (contacts.length !== 1 ? 's' : '') + ' recorded)');
@@ -507,7 +503,6 @@
                 statCard('Baby heartbeat', (latestC.foetal_heart_rate != null ? latestC.foetal_heart_rate + ' bpm' : '-')) +
                 '</div>';
 
-            // Maternal weight trend bars
             var cw = contacts.filter(function (c) { return c.weight_kg != null; });
             if (cw.length > 0) {
                 var maxCW = 0;
@@ -530,7 +525,6 @@
                 }).join('');
             }
 
-            // BP, SFH, foetal heart table
             html += '<div style="overflow-x:auto;margin-top:10px;border:1px solid #e2e8f0;border-radius:8px;">' +
                 '<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:420px;">' +
                 '<thead style="background:#f1f5f9;"><tr style="color:#475569;text-align:left;">' +
@@ -554,7 +548,6 @@
                 '<p style="margin-top:8px;font-size:11px;color:#64748b;">A red BP reading means above 140/90 - report to the clinic immediately.</p>';
         }
 
-        // ---------- SECTION B: CHILD GROWTH ----------
         if (hasChildVitals) {
             var chrono = currentVitalsAll.slice().reverse();
             var latest = currentVitalsAll[0];
@@ -662,9 +655,9 @@
         showModal('Visit History', content);
     };
 
-    // NEW: Dedicated My Prescriptions View
+    // NEW: Dedicated My Prescriptions View (Rich Data from 'dispensing' table)
     window.viewMyPrescriptions = function () {
-        if (!currentVisits || currentVisits.length === 0) {
+        if (!currentDispensingRecords || currentDispensingRecords.length === 0) {
             showModal('My Prescriptions',
                 '<div style="text-align: center; padding: 20px; color: #64748b;">' +
                 '<p>No prescriptions found.</p>' +
@@ -672,44 +665,131 @@
                 '</div>');
             return;
         }
-        
-        var rxVisits = currentVisits.filter(function(v) {
-            return v.prescription && v.prescription.trim() !== '';
+
+        // Group records by date and pharmacist
+        var grouped = {};
+        currentDispensingRecords.forEach(function(rec) {
+            var dateKey = formatDate(rec.created_at);
+            var pharmacist = rec.dispensed_by || 'Pharmacy Staff';
+            var key = dateKey + '|' + pharmacist;
+            if (!grouped[key]) {
+                grouped[key] = { date: dateKey, pharmacist: pharmacist, items: [], notes: rec.notes };
+            }
+            grouped[key].items.push(rec);
         });
 
-        if (rxVisits.length === 0) {
-            showModal('My Prescriptions',
-                '<div style="text-align: center; padding: 20px; color: #64748b;">' +
-                '<p>No prescriptions recorded yet.</p>' +
-                '<p style="font-size: 13px;">Your dispensing cards will appear here after the pharmacist completes your visit.</p>' +
-                '</div>');
-            return;
-        }
-
         var content = '<p style="margin-bottom: 12px; color: #64748b;">Your dispensed medications and dispensing cards:</p>' +
-            '<div style="margin-top: 12px;">' +
-            rxVisits.map(function (v) {
-                return '<div style="padding: 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-left: 4px solid #16a34a; border-radius: 8px; margin-bottom: 12px;">' +
-                    '<div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 8px;">' +
-                        '<div>' +
-                            '<div style="font-weight: 700; color: #0f172a; font-size: 15px;">' + formatDate(v.created_at) + '</div>' +
-                            '<div style="font-size: 13px; color: #166534; margin-top: 2px;">Pharmacy Dispensed</div>' +
-                        '</div>' +
-                        '<button onclick="printDispensingCard(\'' + v.id + '\', \'' + esc(v.created_at) + '\', \'' + esc(v.prescription) + '\')" style="background: #16a34a; color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">' +
-                            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>' +
-                            'View / Print Card' +
-                        '</button>' +
-                    '</div>' +
-                    '<div style="margin-top: 12px; font-size: 14px; color: #0f172a; line-height: 1.6; background: white; padding: 12px; border-radius: 6px; border: 1px dashed #cbd5e1;">' +
-                        esc(v.prescription).replace(/\n/g, '<br>') +
-                    '</div>' +
-                '</div>';
-            }).join('') +
-            '</div>';
+            '<div style="margin-top: 12px;">';
+
+        Object.keys(grouped).forEach(function(key) {
+            var group = grouped[key];
+            content += '<div style="padding: 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-left: 4px solid #16a34a; border-radius: 8px; margin-bottom: 16px;">';
+            content += '<div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">';
+            content += '<div><div style="font-weight: 700; color: #0f172a; font-size: 15px;">' + group.date + '</div>';
+            content += '<div style="font-size: 13px; color: #166534; margin-top: 2px;">Dispensed by: ' + esc(group.pharmacist) + '</div></div>';
+            content += '<button onclick="printDispensingCardRich(\'' + key + '\')" style="background: #16a34a; color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">';
+            content += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>';
+            content += 'View / Print Card</button></div>';
+
+            // Itemized list
+            content += '<div style="background: white; border-radius: 6px; border: 1px solid #e2e8f0; overflow: hidden;">';
+            group.items.forEach(function(item, idx) {
+                content += '<div style="padding: 12px; border-bottom: ' + (idx < group.items.length - 1 ? '1px solid #f1f5f9' : 'none') + ';">';
+                content += '<div style="font-weight: 700; color: #1e3a8a; font-size: 14px;">' + esc(item.item_name || 'Medication') + '</div>';
+                if (item.regimen) content += '<div style="font-size: 13px; color: #475569; margin-top: 4px;"><strong>Regimen:</strong> ' + esc(item.regimen) + '</div>';
+                content += '<div style="font-size: 13px; color: #475569; margin-top: 2px;"><strong>Quantity:</strong> ' + esc(item.quantity) + ' ' + esc(item.unit || '') + (item.months_supply ? ' (' + item.months_supply + ' months supply)' : '') + '</div>';
+                if (item.instructions) content += '<div style="font-size: 13px; color: #0f172a; margin-top: 6px; background: #f8fafc; padding: 8px; border-radius: 4px;"><strong>Instructions:</strong> ' + esc(item.instructions) + '</div>';
+                content += '</div>';
+            });
+            content += '</div>';
+
+            if (group.notes) {
+                content += '<div style="margin-top: 8px; font-size: 12px; color: #64748b; font-style: italic;"><strong>Pharmacist Note:</strong> ' + esc(group.notes) + '</div>';
+            }
+            content += '</div>';
+        });
+
+        content += '</div>';
         showModal('My Prescriptions', content);
     };
 
-    // NEW: Print/View Dispensing Card Helper
+    // NEW: Print Rich Dispensing Card
+    window.printDispensingCardRich = function(groupKey) {
+        // Re-fetch the group data from currentDispensingRecords
+        var grouped = {};
+        currentDispensingRecords.forEach(function(rec) {
+            var dateKey = formatDate(rec.created_at);
+            var pharmacist = rec.dispensed_by || 'Pharmacy Staff';
+            var key = dateKey + '|' + pharmacist;
+            if (!grouped[key]) {
+                grouped[key] = { date: dateKey, pharmacist: pharmacist, items: [], notes: rec.notes, created_at: rec.created_at };
+            }
+            grouped[key].items.push(rec);
+        });
+        var group = grouped[groupKey];
+        if (!group) return;
+
+        var patientName = currentPatient ? esc(currentPatient.child_name || 'Child') : 'Patient';
+        var motherName = currentPatient ? esc(currentPatient.mother_name || 'Mother') : 'Mother';
+        
+        var printWindow = window.open('', '_blank', 'width=800,height=600');
+        printWindow.document.write('<!DOCTYPE html><html><head><title>Dispensing Card</title>');
+        printWindow.document.write('<style>');
+        printWindow.document.write('body { font-family: Arial, Helvetica, sans-serif; padding: 40px; color: #0f172a; max-width: 800px; margin: 0 auto; }');
+        printWindow.document.write('.header { text-align: center; border-bottom: 3px double #1e3a8a; padding-bottom: 20px; margin-bottom: 30px; }');
+        printWindow.document.write('.header h1 { margin: 0; color: #1e3a8a; font-size: 28px; letter-spacing: 1px; }');
+        printWindow.document.write('.header p { margin: 5px 0 0; color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; }');
+        printWindow.document.write('.patient-info { background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; border: 1px solid #e2e8f0; }');
+        printWindow.document.write('.patient-info div { font-size: 14px; }');
+        printWindow.document.write('.patient-info strong { color: #1e3a8a; display: block; font-size: 12px; text-transform: uppercase; margin-bottom: 4px; }');
+        printWindow.document.write('.rx-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }');
+        printWindow.document.write('.rx-table th { background: #1e3a8a; color: white; padding: 12px; text-align: left; font-size: 13px; text-transform: uppercase; }');
+        printWindow.document.write('.rx-table td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 14px; vertical-align: top; }');
+        printWindow.document.write('.rx-table tr:nth-child(even) { background: #f8fafc; }');
+        printWindow.document.write('.notes-box { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 15px; margin-bottom: 30px; font-size: 14px; color: #92400e; }');
+        printWindow.document.write('.footer { margin-top: 50px; text-align: right; font-size: 13px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 20px; }');
+        printWindow.document.write('.footer .sig-line { border-top: 1px solid #0f172a; width: 220px; display: inline-block; margin-top: 50px; padding-top: 8px; color: #0f172a; font-weight: bold; }');
+        printWindow.document.write('@media print { body { padding: 20px; } .no-print { display: none; } }');
+        printWindow.document.write('</style></head><body>');
+        
+        printWindow.document.write('<div class="no-print" style="text-align: right; margin-bottom: 20px;"><button onclick="window.print(); window.close();" style="padding: 12px 24px; background: #1e3a8a; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px;">Print This Card</button></div>');
+        
+        printWindow.document.write('<div class="header"><h1>MNH RCH E-Clinic</h1><p>Official Dispensing Card & Prescription Receipt</p></div>');
+        
+        printWindow.document.write('<div class="patient-info">');
+        printWindow.document.write('<div><strong>Patient Name</strong>' + patientName + '</div>');
+        printWindow.document.write('<div><strong>Mother / Guardian</strong>' + motherName + '</div>');
+        printWindow.document.write('<div><strong>Date Dispensed</strong>' + group.date + '</div>');
+        printWindow.document.write('<div><strong>Pharmacist</strong>' + esc(group.pharmacist) + '</div>');
+        printWindow.document.write('</div>');
+
+        printWindow.document.write('<table class="rx-table">');
+        printWindow.document.write('<thead><tr><th style="width: 30%;">Medication</th><th style="width: 25%;">Regimen / Dosage</th><th style="width: 20%;">Quantity</th><th style="width: 25%;">Instructions</th></tr></thead>');
+        printWindow.document.write('<tbody>');
+        group.items.forEach(function(item) {
+            printWindow.document.write('<tr>');
+            printWindow.document.write('<td><strong>' + esc(item.item_name || 'Medication') + '</strong></td>');
+            printWindow.document.write('<td>' + esc(item.regimen || '-') + '</td>');
+            printWindow.document.write('<td>' + esc(item.quantity) + ' ' + esc(item.unit || '') + (item.months_supply ? '<br><small>(' + item.months_supply + ' mo supply)</small>' : '') + '</td>');
+            printWindow.document.write('<td>' + esc(item.instructions || '-') + '</td>');
+            printWindow.document.write('</tr>');
+        });
+        printWindow.document.write('</tbody></table>');
+
+        if (group.notes) {
+            printWindow.document.write('<div class="notes-box"><strong>Pharmacist Notes:</strong> ' + esc(group.notes) + '</div>');
+        }
+
+        printWindow.document.write('<div class="footer">');
+        printWindow.document.write('<div class="sig-line">Pharmacist Signature & Official Stamp</div>');
+        printWindow.document.write('<p style="margin-top: 30px; font-size: 12px;">Keep this card for your records. Bring it to your next clinic visit. For emergencies, contact your nearest health facility.</p>');
+        printWindow.document.write('</div>');
+        
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+    };
+
+    // Legacy fallback for simple text prescriptions
     window.printDispensingCard = function(visitId, dateStr, prescriptionText) {
         var patientName = currentPatient ? esc(currentPatient.child_name || 'Child') : 'Patient';
         var motherName = currentPatient ? esc(currentPatient.mother_name || 'Mother') : 'Mother';
@@ -756,7 +836,7 @@
         var html = '';
 
         if (currentANC) {
-            var gaText = gaLabel(currentANC.lmp_date, new Date()); // UPDATED to use precise label
+            var gaText = gaLabel(currentANC.lmp_date, new Date());
             html += '<div style="margin-bottom: 10px;">' +
                 '<span style="' + CHIP + 'background:#dcfce7;border-color:#86efac;color:#166534;">Pregnancy active</span>' +
                 '<span style="' + CHIP + '">GA today: ' + gaText + '</span>' +
