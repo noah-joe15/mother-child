@@ -1,7 +1,8 @@
 /**
- * MNH RCH - Pharmacy Portal Logic
+ * MNH RCH - Pharmacy Portal Logic (v2)
  * Guideline-based dispensing (Tanzania ANC Guidelines 2018) with
- * contraindication checks, stock ledger sync, and queue integration.
+ * contraindication checks, stock ledger sync, queue integration,
+ * and a proper Receive/Edit stock workflow (Ledger Book 4 / R&R).
  */
 (function () {
     'use strict';
@@ -57,6 +58,12 @@
         return Math.floor((new Date(onDate) - new Date(lmp)) / (7 * 86400000));
     }
 
+    function isLow(i) { return i.quantity_on_hand <= i.reorder_level; }
+
+    function findStock(id) {
+        return stockCache.filter(function (i) { return i.id === id; })[0] || null;
+    }
+
     function phoneVariants(input) {
         var raw = String(input || '').trim();
         var digits = raw.replace(/\D/g, '');
@@ -78,7 +85,7 @@
         wrap.id = 'ph_modal';
         wrap.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,.6);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;';
         wrap.innerHTML = '<div style="background:white;border-radius:16px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.25);">' +
-            '<div style="padding:18px 24px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:white;border-radius:16px 16px 0 0;">' +
+            '<div style="padding:18px 24px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:white;border-radius:16px 16px 0 0;z-index:5;">' +
             '<h3 style="margin:0;font-size:17px;font-weight:700;color:#0f172a;">' + title + '</h3>' +
             '<button onclick="closePhModal()" style="background:none;border:none;cursor:pointer;color:#64748b;padding:4px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>' +
             '</div><div style="padding:24px;" id="ph_modal_body">' + html + '</div></div>';
@@ -126,7 +133,7 @@
         var t = todayIso();
         var sRes = await sb.from('stock_items').select('*').order('name');
         stockCache = sRes.data || [];
-        var low = stockCache.filter(function (i) { return i.quantity_on_hand <= i.reorder_level; });
+        var low = stockCache.filter(isLow);
 
         var dRes = await sb.from('dispensing').select('*', { count: 'exact', head: true }).gte('created_at', t + 'T00:00:00');
         var qRes = await sb.from('queue').select('*', { count: 'exact', head: true }).eq('current_station', 'Pharmacy').eq('status', 'Waiting');
@@ -140,22 +147,28 @@
         var banner = document.getElementById('low_stock_banner');
         if (low.length) {
             banner.style.display = 'block';
-            banner.innerHTML = 'LOW STOCK ALERT - order via R&R: ' + low.map(function (i) { return esc(i.name) + ' (' + i.quantity_on_hand + ' left)'; }).join('; ');
+            banner.innerHTML = 'LOW STOCK ALERT - receive stock or raise an R&R: ' + low.map(function (i) { return esc(i.name) + ' (' + i.quantity_on_hand + ' left)'; }).join('; ');
         } else {
             banner.style.display = 'none';
         }
 
         var body = document.getElementById('stock_body');
+        if (!stockCache.length) {
+            body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">No commodities in the ledger yet.</td></tr>';
+            return;
+        }
         body.innerHTML = stockCache.map(function (i) {
-            var isLow = i.quantity_on_hand <= i.reorder_level;
+            var lowFlag = isLow(i);
             return '<tr>' +
                 '<td style="font-weight:600;">' + esc(i.name) + '</td>' +
                 '<td>' + esc(i.category || '-') + '</td>' +
-                '<td style="font-weight:700;">' + i.quantity_on_hand + ' ' + esc(i.unit) + '</td>' +
+                '<td style="font-weight:700;color:' + (lowFlag ? '#ef4444' : '#0f172a') + ';">' + i.quantity_on_hand + ' ' + esc(i.unit) + '</td>' +
                 '<td>' + i.reorder_level + '</td>' +
-                '<td>' + (isLow ? '<span class="chip bad">LOW</span>' : '<span class="chip ok">OK</span>') + '</td>' +
-                '<td><button class="btn-check" onclick="receiveStock(\'' + i.id + '\')">Receive</button> ' +
-                '<button class="btn-check" style="background:#64748b;" onclick="adjustStock(\'' + i.id + '\')">Adjust</button></td>' +
+                '<td>' + (lowFlag ? '<span class="chip bad">LOW</span>' : '<span class="chip ok">OK</span>') + '</td>' +
+                '<td style="white-space:nowrap;">' +
+                    '<button class="btn-check" onclick="openReceiveModal(\'' + i.id + '\')">Receive</button> ' +
+                    '<button class="btn-check grey" onclick="openEditItemModal(\'' + i.id + '\')">Edit</button>' +
+                '</td>' +
                 '</tr>';
         }).join('');
     }
@@ -255,6 +268,114 @@
     }
 
     // ==========================================
+    // STOCK RECEIVE & EDIT (proper modals, no prompts)
+    // ==========================================
+    window.openReceiveModal = function (itemId) {
+        var item = findStock(itemId);
+        if (!item) return;
+        var suggest = Math.max(item.reorder_level * 2 - item.quantity_on_hand, 0);
+        var html = '<div class="stk-summary">' +
+            '<strong>' + esc(item.name) + '</strong><br>' +
+            'Category: ' + esc(item.category || '-') + ' &middot; Unit: ' + esc(item.unit) + '<br>' +
+            'On hand: <strong style="color:' + (isLow(item) ? '#ef4444' : '#16a34a') + ';">' + item.quantity_on_hand + '</strong> &middot; Reorder level: ' + item.reorder_level + ' &middot; Status: ' + (isLow(item) ? 'LOW' : 'OK') +
+            '</div>' +
+            '<div class="stk-group"><label>Quantity received (' + esc(item.unit) + ') *</label>' +
+            '<input type="number" id="recv_qty" min="1" value="' + (suggest > 0 ? suggest : '') + '" placeholder="e.g. 500"></div>' +
+            (suggest > 0 ? '<p style="font-size:12px;color:#64748b;margin:-8px 0 12px 0;">Suggested top-up to twice the reorder level: ' + suggest + ' ' + esc(item.unit) + '.</p>' : '') +
+            '<div class="stk-group"><label>Supplier / R&R reference</label>' +
+            '<input type="text" id="recv_ref" placeholder="e.g. MSD delivery, R&R Form No. 44/2026"></div>' +
+            '<div class="stk-group"><label>Notes (batch, expiry, condition)</label>' +
+            '<input type="text" id="recv_notes" placeholder="Optional"></div>' +
+            '<button class="btn-check" style="width:100%;padding:13px;font-size:14px;" onclick="saveReceive(\'' + item.id + '\')">Post Receipt to Ledger</button>';
+        showModal('Receive Stock', html);
+    };
+
+    window.saveReceive = async function (itemId) {
+        var item = findStock(itemId);
+        if (!item) return;
+        var qty = parseFloat(document.getElementById('recv_qty').value);
+        if (isNaN(qty) || qty <= 0) { alert('Enter a valid received quantity greater than zero.'); return; }
+        var ref = document.getElementById('recv_ref').value.trim();
+        var notes = document.getElementById('recv_notes').value.trim();
+        var combined = [ref, notes].filter(function (x) { return x; }).join(' | ') || null;
+
+        try {
+            var upd = await sb.from('stock_items').update({
+                quantity_on_hand: item.quantity_on_hand + qty,
+                updated_at: new Date().toISOString()
+            }).eq('id', itemId);
+            if (upd.error) throw upd.error;
+            var mv = await sb.from('stock_movements').insert({
+                item_id: itemId,
+                change_qty: qty,
+                reason: 'Receipt',
+                notes: combined,
+                created_by: currentUser
+            });
+            if (mv.error) throw mv.error;
+            alert(qty + ' ' + item.unit + ' of ' + item.name + ' received into store. Ledger updated.');
+            closePhModal();
+            loadStatsAndStock();
+        } catch (err) {
+            alert('Receipt failed: ' + err.message);
+        }
+    };
+
+    window.openEditItemModal = function (itemId) {
+        var item = findStock(itemId);
+        if (!item) return;
+        var html = '<div class="stk-summary"><strong>' + esc(item.name) + '</strong><br>On hand: ' + item.quantity_on_hand + ' ' + esc(item.unit) + ' &middot; Status: ' + (isLow(item) ? 'LOW' : 'OK') + '</div>' +
+            '<div class="stk-group"><label>Category</label><input type="text" id="edit_category" value="' + esc(item.category || '') + '"></div>' +
+            '<div class="stk-group"><label>Unit</label><input type="text" id="edit_unit" value="' + esc(item.unit) + '"></div>' +
+            '<div class="stk-group"><label>Reorder level</label><input type="number" id="edit_reorder" min="0" value="' + item.reorder_level + '"></div>' +
+            '<div class="stk-group"><label>Stock correction (+ or -), leave blank for none</label>' +
+            '<input type="number" id="edit_correction" placeholder="e.g. -12 for expired stock removed"></div>' +
+            '<div class="stk-group"><label>Reason for correction</label><input type="text" id="edit_reason" placeholder="e.g. expiry, breakage, physical count"></div>' +
+            '<button class="btn-check" style="width:100%;padding:13px;font-size:14px;" onclick="saveEditItem(\'' + item.id + '\')">Save Changes</button>';
+        showModal('Edit Commodity', html);
+    };
+
+    window.saveEditItem = async function (itemId) {
+        var item = findStock(itemId);
+        if (!item) return;
+        var reorder = parseFloat(document.getElementById('edit_reorder').value);
+        if (isNaN(reorder) || reorder < 0) { alert('Reorder level must be zero or more.'); return; }
+        var correction = parseFloat(document.getElementById('edit_correction').value);
+        var reasonTxt = document.getElementById('edit_reason').value.trim();
+
+        try {
+            var upd = await sb.from('stock_items').update({
+                category: document.getElementById('edit_category').value.trim() || null,
+                unit: document.getElementById('edit_unit').value.trim() || item.unit,
+                reorder_level: reorder,
+                updated_at: new Date().toISOString()
+            }).eq('id', itemId);
+            if (upd.error) throw upd.error;
+
+            if (!isNaN(correction) && correction !== 0) {
+                var newQty = item.quantity_on_hand + correction;
+                if (newQty < 0) { alert('Correction would make stock negative. Use a smaller number.'); return; }
+                var upd2 = await sb.from('stock_items').update({ quantity_on_hand: newQty, updated_at: new Date().toISOString() }).eq('id', itemId);
+                if (upd2.error) throw upd2.error;
+                var mv = await sb.from('stock_movements').insert({
+                    item_id: itemId,
+                    change_qty: correction,
+                    reason: 'Adjustment',
+                    notes: reasonTxt || 'Manual correction',
+                    created_by: currentUser
+                });
+                if (mv.error) throw mv.error;
+            }
+
+            alert('Commodity updated.');
+            closePhModal();
+            loadStatsAndStock();
+        } catch (err) {
+            alert('Update failed: ' + err.message);
+        }
+    };
+
+    // ==========================================
     // DISPENSING CARD
     // ==========================================
     window.openDispensing = async function (patientId, queueId, contactId) {
@@ -275,7 +396,6 @@
             var hRes = await sb.from('dispensing').select('item_name, quantity, unit, created_at').eq('patient_id', patientId).order('created_at', { ascending: false }).limit(5);
             var history = hRes.data || [];
 
-            // Clinical context
             var ctx = {
                 pregnant: !!enr,
                 ga: enr ? gaWeeks(enr.lmp_date, new Date()) : null,
@@ -305,8 +425,8 @@
             var allergyRow = '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin:12px 0;font-size:13px;">' +
                 '<strong>Allergy verification (guideline: always ask about sulfa allergy before SP):</strong> ' +
                 (p.sulfa_allergy ? '<span class="chip bad">Sulfa allergy RECORDED</span>' : '<span class="chip ok">No sulfa allergy recorded</span>') +
-                ' <button class="btn-check" style="background:#64748b;" onclick="toggleSulfa(\'' + p.id + '\', ' + (!p.sulfa_allergy) + ')">' + (p.sulfa_allergy ? 'Clear allergy flag' : 'Record sulfa allergy') + '</button>' +
-                (ctx.pregnant ? ' <button class="btn-check" style="background:#64748b;" onclick="toggleCotrim(\'' + enr.id + '\', ' + (!ctx.cotrim) + ')">' + (ctx.cotrim ? 'Not on cotrimoxazole' : 'On cotrimoxazole') + '</button>' : '') +
+                ' <button class="btn-check grey" onclick="toggleSulfa(\'' + p.id + '\', ' + (!p.sulfa_allergy) + ')">' + (p.sulfa_allergy ? 'Clear allergy flag' : 'Record sulfa allergy') + '</button>' +
+                (ctx.pregnant ? ' <button class="btn-check grey" onclick="toggleCotrim(\'' + enr.id + '\', ' + (!ctx.cotrim) + ')">' + (ctx.cotrim ? 'Not on cotrimoxazole' : 'On cotrimoxazole') + '</button>' : '') +
                 '</div>';
 
             var options = CATALOG.map(function (c, idx) { return '<option value="' + idx + '">' + esc(c.name) + '</option>'; }).join('');
@@ -320,8 +440,8 @@
                 '<select id="disp_item" onchange="refreshChecks()" style="width:100%;padding:10px 12px;font-size:14px;border:1.5px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-family:Inter,sans-serif;">' + options + '</select></div>' +
                 '<div id="disp_checks" style="margin-bottom:10px;"></div>' +
                 '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
-                '<div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Quantity</label><input type="number" id="disp_qty" style="width:100%;padding:10px 12px;font-size:14px;border:1.5px solid #e2e8f0;border-radius:8px;"></div>' +
-                '<div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Months supply (IFA)</label><input type="number" id="disp_months" style="width:100%;padding:10px 12px;font-size:14px;border:1.5px solid #e2e8f0;border-radius:8px;"></div>' +
+                '<div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Quantity</label><input type="number" id="disp_qty" style="width:100%;padding:10px 12px;font-size:14px;border:1.5px solid #e2e8f0;border-radius:8px;box-sizing:border-box;"></div>' +
+                '<div><label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Months supply (IFA)</label><input type="number" id="disp_months" style="width:100%;padding:10px 12px;font-size:14px;border:1.5px solid #e2e8f0;border-radius:8px;box-sizing:border-box;"></div>' +
                 '</div>' +
                 '<div style="margin-top:10px;"><label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Regimen / instructions</label><textarea id="disp_regimen" rows="3" style="width:100%;padding:10px 12px;font-size:13px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:Inter,sans-serif;box-sizing:border-box;"></textarea></div>' +
                 '<div id="disp_stock_line" style="margin:10px 0;font-size:12px;color:#64748b;"></div>' +
@@ -362,7 +482,7 @@
         if (st) {
             var enough = st.quantity_on_hand >= item.qty;
             stockLine.innerHTML = 'Stock: <strong>' + st.quantity_on_hand + ' ' + esc(st.unit) + '</strong> on hand (reorder at ' + st.reorder_level + '). ' +
-                (enough ? '' : '<span style="color:#ef4444;font-weight:700;">Insufficient stock - this dispense will trigger an R&R order.</span>');
+                (enough ? '' : '<span style="color:#ef4444;font-weight:700;">Insufficient stock - receive stock or raise an R&R before dispensing.</span>');
         } else {
             stockLine.innerHTML = 'No ledger entry mapped for this item.';
         }
@@ -407,7 +527,6 @@
             }).select().single();
             if (ins.error) throw ins.error;
 
-            // Stock ledger sync
             var st = stockCache.filter(function (s) { return s.name === item.stock; })[0];
             if (st) {
                 var newQty = st.quantity_on_hand - qty;
@@ -415,7 +534,6 @@
                 await sb.from('stock_movements').insert({ item_id: st.id, change_qty: -qty, reason: 'Dispensed', reference_id: ins.data.id, created_by: currentUser });
             }
 
-            // Close the queue loop when patient came via referral
             if (queueId) {
                 await sb.from('queue').update({ status: 'Completed', current_station: 'Pharmacy' }).eq('id', queueId);
             }
@@ -444,33 +562,6 @@
         if (res.error) { alert('Update failed: ' + res.error.message); return; }
         var e = await sb.from('anc_enrollments').select('patient_id').eq('id', enrId).single();
         if (e.data) openDispensing(e.data.patient_id, null, null);
-    };
-
-    // ==========================================
-    // STOCK ACTIONS
-    // ==========================================
-    window.receiveStock = async function (itemId) {
-        var q = prompt('Quantity received into store:');
-        if (q === null || q === '') return;
-        var qty = parseFloat(q);
-        if (isNaN(qty) || qty <= 0) { alert('Invalid quantity.'); return; }
-        var item = stockCache.filter(function (i) { return i.id === itemId; })[0];
-        if (!item) return;
-        await sb.from('stock_items').update({ quantity_on_hand: item.quantity_on_hand + qty, updated_at: new Date().toISOString() }).eq('id', itemId);
-        await sb.from('stock_movements').insert({ item_id: itemId, change_qty: qty, reason: 'Receipt', created_by: currentUser });
-        loadStatsAndStock();
-    };
-
-    window.adjustStock = async function (itemId) {
-        var q = prompt('Adjustment quantity (use negative for losses/expiries, positive for corrections):');
-        if (q === null || q === '') return;
-        var qty = parseFloat(q);
-        if (isNaN(qty) || qty === 0) { alert('Invalid adjustment.'); return; }
-        var item = stockCache.filter(function (i) { return i.id === itemId; })[0];
-        if (!item) return;
-        await sb.from('stock_items').update({ quantity_on_hand: item.quantity_on_hand + qty, updated_at: new Date().toISOString() }).eq('id', itemId);
-        await sb.from('stock_movements').insert({ item_id: itemId, change_qty: qty, reason: 'Adjustment', created_by: currentUser });
-        loadStatsAndStock();
     };
 
     // ==========================================
