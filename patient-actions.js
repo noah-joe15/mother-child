@@ -1,5 +1,5 @@
 /**
- * MNH RCH - Patient Actions & Dashboard Logic (v11)
+ * MNH RCH - Patient Actions & Dashboard Logic (v12)
  * Mother portal: identity, child profile, full growth history (with visual charts),
  * visits, immunization schedule, appointments, and the mother's
  * own ANC contacts per Tanzania National ANC Guidelines 2018.
@@ -307,10 +307,10 @@
 
             // Visit history
             var qRes = await supabase.from('queue')
-                .select('status, current_station, created_at, diagnosis, prescription')
+                .select('id, status, current_station, created_at, diagnosis, prescription')
                 .eq('patient_id', currentPatient.id)
                 .order('created_at', { ascending: false })
-                .limit(5);
+                .limit(10); // Increased limit to ensure we catch recent prescriptions
             currentVisits = qRes.data || [];
             renderActivityList(currentVisits);
 
@@ -641,18 +641,114 @@
                 '</div>');
             return;
         }
-        var content = '<p>Your complete clinical history:</p>' +
+        var content = '<p style="margin-bottom: 12px; color: #64748b;">Your complete clinical history:</p>' +
             '<div style="margin-top: 12px;">' +
             currentVisits.map(function (v) {
+                var hasRx = v.prescription && v.prescription.trim() !== '';
+                var rxButton = hasRx ? 
+                    '<button onclick="printDispensingCard(\'' + v.id + '\', \'' + esc(v.created_at) + '\', \'' + esc(v.prescription) + '\')" style="margin-top: 8px; background: #1e3a8a; color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>' +
+                    'View Dispensing Card</button>' : '';
+                
                 return '<div style="padding: 12px; background: #f8fafc; border-left: 3px solid #1e3a8a; border-radius: 6px; margin-bottom: 8px;">' +
                     '<div style="font-weight: 700; color: #0f172a; font-size: 14px;">' + formatDate(v.created_at) + '</div>' +
                     '<div style="font-size: 13px; color: #64748b; margin-top: 4px;">Station: ' + esc(v.current_station || 'General') + ' | Status: ' + esc(v.status) + '</div>' +
                     (v.diagnosis ? '<div style="font-size: 13px; margin-top: 4px;"><strong>Diagnosis:</strong> ' + esc(v.diagnosis) + '</div>' : '') +
-                    (v.prescription ? '<div style="font-size: 13px; margin-top: 4px;"><strong>Prescription:</strong> ' + esc(v.prescription) + '</div>' : '') +
+                    (hasRx ? '<div style="font-size: 13px; margin-top: 4px;"><strong>Prescription:</strong> ' + esc(v.prescription).replace(/\n/g, '<br>') + '</div>' : '') +
+                    rxButton +
                     '</div>';
             }).join('') +
             '</div>';
         showModal('Visit History', content);
+    };
+
+    // NEW: Dedicated My Prescriptions View
+    window.viewMyPrescriptions = function () {
+        if (!currentVisits || currentVisits.length === 0) {
+            showModal('My Prescriptions',
+                '<div style="text-align: center; padding: 20px; color: #64748b;">' +
+                '<p>No prescriptions found.</p>' +
+                '<p style="font-size: 13px;">Dispensed medications will appear here after your pharmacy visits.</p>' +
+                '</div>');
+            return;
+        }
+        
+        var rxVisits = currentVisits.filter(function(v) {
+            return v.prescription && v.prescription.trim() !== '';
+        });
+
+        if (rxVisits.length === 0) {
+            showModal('My Prescriptions',
+                '<div style="text-align: center; padding: 20px; color: #64748b;">' +
+                '<p>No prescriptions recorded yet.</p>' +
+                '<p style="font-size: 13px;">Your dispensing cards will appear here after the pharmacist completes your visit.</p>' +
+                '</div>');
+            return;
+        }
+
+        var content = '<p style="margin-bottom: 12px; color: #64748b;">Your dispensed medications and dispensing cards:</p>' +
+            '<div style="margin-top: 12px;">' +
+            rxVisits.map(function (v) {
+                return '<div style="padding: 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-left: 4px solid #16a34a; border-radius: 8px; margin-bottom: 12px;">' +
+                    '<div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 8px;">' +
+                        '<div>' +
+                            '<div style="font-weight: 700; color: #0f172a; font-size: 15px;">' + formatDate(v.created_at) + '</div>' +
+                            '<div style="font-size: 13px; color: #166534; margin-top: 2px;">Pharmacy Dispensed</div>' +
+                        '</div>' +
+                        '<button onclick="printDispensingCard(\'' + v.id + '\', \'' + esc(v.created_at) + '\', \'' + esc(v.prescription) + '\')" style="background: #16a34a; color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">' +
+                            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>' +
+                            'View / Print Card' +
+                        '</button>' +
+                    '</div>' +
+                    '<div style="margin-top: 12px; font-size: 14px; color: #0f172a; line-height: 1.6; background: white; padding: 12px; border-radius: 6px; border: 1px dashed #cbd5e1;">' +
+                        esc(v.prescription).replace(/\n/g, '<br>') +
+                    '</div>' +
+                '</div>';
+            }).join('') +
+            '</div>';
+        showModal('My Prescriptions', content);
+    };
+
+    // NEW: Print/View Dispensing Card Helper
+    window.printDispensingCard = function(visitId, dateStr, prescriptionText) {
+        var patientName = currentPatient ? esc(currentPatient.child_name || 'Child') : 'Patient';
+        var motherName = currentPatient ? esc(currentPatient.mother_name || 'Mother') : 'Mother';
+        var dateFormatted = formatDate(dateStr);
+        
+        var printWindow = window.open('', '_blank', 'width=800,height=600');
+        printWindow.document.write('<!DOCTYPE html><html><head><title>Dispensing Card</title>');
+        printWindow.document.write('<style>');
+        printWindow.document.write('body { font-family: Arial, sans-serif; padding: 40px; color: #0f172a; }');
+        printWindow.document.write('.header { text-align: center; border-bottom: 2px solid #1e3a8a; padding-bottom: 20px; margin-bottom: 30px; }');
+        printWindow.document.write('.header h1 { margin: 0; color: #1e3a8a; font-size: 24px; }');
+        printWindow.document.write('.header p { margin: 5px 0 0; color: #64748b; font-size: 14px; }');
+        printWindow.document.write('.patient-info { background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }');
+        printWindow.document.write('.patient-info div { font-size: 14px; }');
+        printWindow.document.write('.patient-info strong { color: #1e3a8a; }');
+        printWindow.document.write('.rx-box { border: 2px solid #1e3a8a; border-radius: 8px; padding: 20px; min-height: 200px; }');
+        printWindow.document.write('.rx-title { font-weight: bold; font-size: 18px; color: #1e3a8a; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }');
+        printWindow.document.write('.rx-content { font-size: 15px; line-height: 1.8; white-space: pre-wrap; }');
+        printWindow.document.write('.footer { margin-top: 40px; text-align: right; font-size: 13px; color: #64748b; }');
+        printWindow.document.write('.footer .sig-line { border-top: 1px solid #0f172a; width: 200px; display: inline-block; margin-top: 40px; padding-top: 5px; }');
+        printWindow.document.write('@media print { body { padding: 20px; } .no-print { display: none; } }');
+        printWindow.document.write('</style></head><body>');
+        printWindow.document.write('<div class="no-print" style="text-align: right; margin-bottom: 20px;"><button onclick="window.print(); window.close();" style="padding: 10px 20px; background: #1e3a8a; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Print This Card</button></div>');
+        printWindow.document.write('<div class="header"><h1>MNH RCH E-Clinic</h1><p>Official Dispensing Card / Prescription Receipt</p></div>');
+        printWindow.document.write('<div class="patient-info">');
+        printWindow.document.write('<div><strong>Patient:</strong> ' + patientName + '</div>');
+        printWindow.document.write('<div><strong>Mother:</strong> ' + motherName + '</div>');
+        printWindow.document.write('<div><strong>Date:</strong> ' + dateFormatted + '</div>');
+        printWindow.document.write('</div>');
+        printWindow.document.write('<div class="rx-box">');
+        printWindow.document.write('<div class="rx-title">℞ Medications Dispensed</div>');
+        printWindow.document.write('<div class="rx-content">' + esc(prescriptionText).replace(/\n/g, '<br>') + '</div>');
+        printWindow.document.write('</div>');
+        printWindow.document.write('<div class="footer">');
+        printWindow.document.write('<div class="sig-line">Pharmacist Signature & Stamp</div>');
+        printWindow.document.write('<p style="margin-top: 20px;">Keep this card for your records. Bring it to your next visit.</p>');
+        printWindow.document.write('</div>');
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
     };
 
     window.viewFullSchedule = function () {
