@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Portal - MNH RCH</title>
+    <link rel="stylesheet" href="/style.css?v=6">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #ef4444;
+            --bg-ivory: #FFFFF0;
+            --bg-cream: #FDF5E6;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 12px rgba(30, 58, 138, 0.08);
+        }
+
+        body { background: linear-gradient(135deg, var(--bg-ivory) 0%, var(--bg-cream) 100%); min-height: 100vh; }
+
+        .navbar { background: white; border-bottom: 1px solid var(--border); box-shadow: var(--shadow); padding: 16px 0; }
+        .logo-mark { width: 44px; height: 44px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; }
+        .logo-text { font-weight: 700; font-size: 18px; color: var(--text-dark); display: flex; flex-direction: column; line-height: 1.2; }
+        .logo-text span { font-size: 11px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        .btn-logout { background: transparent; border: 1.5px solid var(--border); color: var(--text-dark); padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+        .btn-logout:hover { background: #fee2e2; border-color: var(--danger); color: var(--danger); }
+
+        .page-header { margin-bottom: 28px; }
+        .page-header h1 { font-size: 30px; font-weight: 800; color: var(--text-dark); margin-bottom: 6px; letter-spacing: -0.02em; }
+        .page-header p { color: var(--text-muted); font-size: 15px; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; margin-bottom: 28px; }
+        .stat-card { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 18px 14px; text-align: center; box-shadow: var(--shadow); }
+        .stat-number { font-size: 30px; font-weight: 800; margin-bottom: 4px; line-height: 1; }
+        .stat-label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat-card.disp .stat-number { color: var(--primary-light); }
+        .stat-card.queue .stat-number { color: var(--warning); }
+        .stat-card.low .stat-number { color: var(--danger); }
+        .stat-card.seen .stat-number { color: var(--success); }
+
+        .form-card { background: white; border: 1px solid var(--border); border-radius: 20px; padding: 24px 28px; margin-bottom: 24px; box-shadow: var(--shadow); }
+        .form-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 2px solid var(--border); }
+        .form-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #dbeafe, #bfdbfe); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--primary); flex-shrink: 0; }
+        .form-title { font-size: 18px; font-weight: 700; color: var(--text-dark); margin: 0; }
+
+        .shelf { max-height: 320px; overflow-y: auto; padding-right: 6px; }
+        .shelf::-webkit-scrollbar { width: 8px; }
+        .shelf::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+        .shelf::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+
+        .row-item { padding: 12px 16px; background: #f8fafc; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 12px; border: 1.5px solid transparent; flex-wrap: wrap; }
+        .row-item:hover { background: white; border-color: var(--primary-light); }
+        .row-item h4 { margin: 0 0 2px 0; font-size: 14px; font-weight: 700; color: var(--text-dark); }
+        .row-item p { margin: 0; font-size: 12px; color: var(--text-muted); }
+
+        .chip { display: inline-block; padding: 4px 10px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; border-radius: 100px; font-size: 11px; font-weight: 700; margin: 0 6px 6px 0; }
+        .chip.ok { background: #dcfce7; border-color: #86efac; color: #166534; }
+        .chip.warn { background: #fef3c7; border-color: #fcd34d; color: #92400e; }
+        .chip.bad { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
+
+        .btn-check { padding: 9px 16px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+        .btn-check:hover { background: var(--primary-light); }
+
+        .search-input { width: 100%; padding: 12px 16px; font-size: 15px; background: #f8fafc; border: 1.5px solid var(--border); border-radius: 10px; outline: none; font-family: 'Inter', sans-serif; box-sizing: border-box; }
+        .search-input:focus { border-color: var(--primary-light); background: white; }
+
+        table.ledger { width: 100%; border-collapse: collapse; font-size: 13px; }
+        table.ledger th { background: #f1f5f9; color: #475569; text-align: left; padding: 10px 8px; border-bottom: 2px solid var(--border); font-size: 12px; }
+        table.ledger td { padding: 10px 8px; border-bottom: 1px solid var(--border); color: var(--text-dark); }
+
+        .loading-skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: loading 1.5s infinite; border-radius: 8px; height: 20px; margin-bottom: 12px; }
+        @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .row-item { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container nav-inner" style="display:flex; justify-content:space-between; align-items:center;">
+            <a href="nurse.html" class="logo" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
+                <div class="logo-mark">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 24px; height: 24px;"><path d="M12 2v20M2 12h20"/></svg>
+                </div>
+                <div class="logo-text">MNH RCH <span>Pharmacy Portal</span></div>
+            </a>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span id="user_info" style="font-size: 13px; font-weight: 600; color: var(--text-dark);">Loading...</span>
+                <a href="nurse.html" class="btn-logout">Nurse Station</a>
+                <a href="anc.html" class="btn-logout">ANC Clinic</a>
+                <button onclick="handleLogout()" class="btn-logout">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container" style="padding: 36px 20px; max-width: 1100px;">
+
+        <div id="loading_message" style="text-align: center; padding: 80px 20px;">
+            <div class="loading-skeleton" style="max-width: 300px; margin: 0 auto 16px;"></div>
+            <div class="loading-skeleton" style="max-width: 200px; margin: 0 auto;"></div>
+        </div>
+
+        <div id="pharmacy_content" style="display: none;">
+
+            <div class="page-header">
+                <h1>Pharmacy & Dispensing</h1>
+                <p>Guideline-based dispensing with contraindication checks and live commodity ledger (Ledger Book 4 / R&R)</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card disp"><div class="stat-number" id="stat_dispensed">0</div><div class="stat-label">Dispensed Today</div></div>
+                <div class="stat-card queue"><div class="stat-number" id="stat_queue">0</div><div class="stat-label">Waiting at Pharmacy</div></div>
+                <div class="stat-card seen"><div class="stat-number" id="stat_seen">0</div><div class="stat-label">Clients Seen Today</div></div>
+                <div class="stat-card low"><div class="stat-number" id="stat_low">0</div><div class="stat-label">Low Stock Items</div></div>
+            </div>
+
+            <div id="low_stock_banner" style="display:none; background:#fee2e2; border:1.5px solid #fca5a5; color:#991b1b; border-radius:12px; padding:12px 16px; font-size:13px; font-weight:600; margin-bottom:20px;"></div>
+
+            <!-- Pharmacy queue -->
+            <div class="form-card">
+                <div class="form-header">
+                    <div class="form-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                    <h2 class="form-title">Referred to Pharmacy (Queue)</h2>
+                </div>
+                <div id="queue_list" class="shelf"><p style="color:var(--text-muted); text-align:center; padding:20px; font-style:italic;">Loading queue...</p></div>
+            </div>
+
+            <!-- Today's activity -->
+            <div class="form-card">
+                <div class="form-header">
+                    <div class="form-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+                    <h2 class="form-title">Today's Clinic Activity (ANC contacts & vitals)</h2>
+                </div>
+                <div id="activity_list" class="shelf"><p style="color:var(--text-muted); text-align:center; padding:20px; font-style:italic;">Loading today's activity...</p></div>
+            </div>
+
+            <!-- Search -->
+            <div class="form-card">
+                <div class="form-header">
+                    <div class="form-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+                    <h2 class="form-title">Patient Search</h2>
+                </div>
+                <input type="text" id="search_input" class="search-input" placeholder="Search by mother name, child name or phone number..." autocomplete="off">
+                <div id="search_results" class="shelf" style="margin-top:12px;"></div>
+            </div>
+
+            <!-- Stock ledger -->
+            <div class="form-card">
+                <div class="form-header">
+                    <div class="form-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></div>
+                    <h2 class="form-title">Commodity Stock Ledger</h2>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="ledger">
+                        <thead><tr><th>Commodity</th><th>Category</th><th>On Hand</th><th>Reorder Level</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="stock_body"><tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">Loading stock...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Recent dispensing -->
+            <div class="form-card">
+                <div class="form-header">
+                    <div class="form-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                    <h2 class="form-title">Recent Dispensing</h2>
+                </div>
+                <div id="recent_list" class="shelf"><p style="color:var(--text-muted); text-align:center; padding:20px; font-style:italic;">Loading...</p></div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="/pharmacy-actions.js?v=1"></script>
+</body>
+</html>
