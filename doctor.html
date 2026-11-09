@@ -710,9 +710,24 @@
                 if (!session) { window.location.href = 'login.html'; return; }
 
                 const { data: profile } = await supabaseClient.from('profiles').select('full_name, role').eq('id', session.user.id).single();
-                if (!profile) { window.location.href = 'login.html'; return; }
 
-                document.getElementById('user_info').textContent = `Dr. ${profile.full_name}`;
+                // ============================================
+                // ROLE GUARD: doctors and administrators only
+                // ============================================
+                if (!profile || (profile.role !== 'doctor' && profile.role !== 'admin')) {
+                    var home = 'login.html';
+                    if (profile) {
+                        if (profile.role === 'pharmacist') home = 'pharmacy.html';
+                        else if (profile.role === 'nurse') home = 'nurse.html';
+                    }
+                    alert('The Doctor Portal is restricted to doctors and administrators.');
+                    window.location.href = home;
+                    return;
+                }
+
+                // Title-safe display name (avoids "Dr. Dr. Amina")
+                var displayName = (profile.full_name || '').indexOf('Dr.') === 0 ? profile.full_name : ('Dr. ' + profile.full_name);
+                document.getElementById('user_info').textContent = displayName;
                 document.getElementById('loading_message').style.display = 'none';
                 document.getElementById('doctor_content').style.display = 'block';
                 
@@ -723,6 +738,7 @@
                     .subscribe();
             } catch (error) {
                 console.error('[Doctor] Init error:', error);
+                document.getElementById('loading_message').innerHTML = '<p style="color: var(--danger); font-weight: 600;">Error loading doctor portal. Refresh the page.</p>';
             }
         }
 
@@ -768,9 +784,10 @@
             const isWaiting = q.status === 'Waiting';
             
             let muacClass = 'normal', muacStatus = 'Normal';
-            if (vitals?.muac_mm) {
+            if (vitals && vitals.muac_mm) {
                 if (vitals.muac_mm < 115) { muacClass = 'critical'; muacStatus = 'Severe'; }
                 else if (vitals.muac_mm < 125) { muacClass = 'warning'; muacStatus = 'Moderate'; }
+                else if (vitals.muac_mm > 160) { muacClass = 'warning'; muacStatus = 'Verify value'; }
             }
 
             return `
@@ -804,16 +821,18 @@
             `;
         }
 
-        function openConsultationModal(queueId, patient, vitals) {
+        async function openConsultationModal(queueId, patient, vitals) {
             currentConsultationQueueId = queueId;
-            document.getElementById('modal_patient_name').textContent = patient?.child_name || 'Unknown';
-            document.getElementById('modal_mother_name').textContent = 'Mother: ' + (patient?.mother_name || 'Unknown');
-            document.getElementById('modal_vitals').textContent = `W: ${vitals?.weight_kg || '-'}kg | MUAC: ${vitals?.muac_mm || '-'}mm | Temp: ${vitals?.temperature || '-'}°C`;
+            document.getElementById('modal_patient_name').textContent = (patient && patient.child_name) || 'Unknown';
+            document.getElementById('modal_mother_name').textContent = 'Mother: ' + ((patient && patient.mother_name) || 'Unknown');
+            document.getElementById('modal_vitals').textContent = `W: ${(vitals && vitals.weight_kg) || '-'}kg | MUAC: ${(vitals && vitals.muac_mm) || '-'}mm | Temp: ${(vitals && vitals.temperature) || '-'}°C`;
             
-            // Pre-fill if already has data
             document.getElementById('consultation_form').reset();
-            
             document.getElementById('consultation_modal').classList.add('active');
+
+            // Mark as in consultation so the stats and other stations see it live
+            await supabaseClient.from('queue').update({ status: 'In-Progress' }).eq('id', queueId);
+            loadQueue();
         }
 
         function closeConsultationModal() {
@@ -830,26 +849,33 @@
                 return;
             }
 
-            // Gather danger signs
+            // Map the clinical decision onto queue station + status so downstream
+            // portals (Pharmacy) pick the patient up correctly.
+            let station = finalAction;
+            let status = 'Completed';
+            if (finalAction === 'Pharmacy') { station = 'Pharmacy'; status = 'Waiting'; }
+            else if (finalAction === 'Ward') { station = 'Ward'; status = 'Admitted'; }
+            else { station = 'Discharged'; status = 'Completed'; }
+
             const dangerSigns = Array.from(document.querySelectorAll('input[name="danger_sign"]:checked')).map(cb => cb.value);
             const symptoms = document.getElementById('symptoms').value;
             const examFindings = `RR: ${document.getElementById('resp_rate').value || 'N/A'}, Pallor: ${document.getElementById('pallor').value}, Edema: ${document.getElementById('edema').value}, Immunization: ${document.getElementById('immunization').value}`;
+            const fullDiagnosis = (dangerSigns.length ? 'DANGER SIGNS: ' + dangerSigns.join(', ') + ' | ' : '') + diagnosis;
 
             try {
                 const updateData = {
-                    status: 'Completed',
-                    current_station: finalAction,
+                    status: status,
+                    current_station: station,
                     final_action: finalAction,
-                    diagnosis: diagnosis,
-                    prescription: prescription,
-                    // We can store the rest as a JSON string in a notes column if you add one, or just keep it simple
+                    diagnosis: fullDiagnosis,
+                    prescription: prescription + (symptoms || examFindings ? '\n[History] ' + symptoms + ' [Exam] ' + examFindings : ''),
                     updated_at: new Date().toISOString()
                 };
 
                 const { error } = await supabaseClient.from('queue').update(updateData).eq('id', currentConsultationQueueId);
                 if (error) throw error;
 
-                alert(`Patient successfully sent to ${finalAction}!`);
+                alert(`Consultation saved. Patient sent to ${station}.`);
                 closeConsultationModal();
                 await loadQueue();
             } catch (error) {
