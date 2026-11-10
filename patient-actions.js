@@ -713,7 +713,7 @@
         showModal('My Prescriptions', content);
     };
 
-    // NEW: Print Rich Dispensing Card
+    // NEW: Print Rich Dispensing Card (Elegant Professional Design)
     window.printDispensingCardRich = function(groupKey) {
         // Re-fetch the group data from currentDispensingRecords
         var grouped = {};
@@ -733,34 +733,47 @@
         var motherName = currentPatient ? esc(currentPatient.mother_name || 'Mother') : 'Mother';
         
         var printWindow = window.open('', '_blank', 'width=800,height=600');
-        printWindow.document.write('<!DOCTYPE html><html><head><title>Dispensing Card</title>');
+        printWindow.document.write('<!DOCTYPE html><html><head><title>Dispensing Card - ' + patientName + '</title>');
         printWindow.document.write('<style>');
-        printWindow.document.write('body { font-family: Arial, Helvetica, sans-serif; padding: 40px; color: #0f172a; max-width: 800px; margin: 0 auto; }');
-        printWindow.document.write('.header { text-align: center; border-bottom: 3px double #1e3a8a; padding-bottom: 20px; margin-bottom: 30px; }');
-        printWindow.document.write('.header h1 { margin: 0; color: #1e3a8a; font-size: 28px; letter-spacing: 1px; }');
-        printWindow.document.write('.header p { margin: 5px 0 0; color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; }');
-        printWindow.document.write('.patient-info { background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; border: 1px solid #e2e8f0; }');
-        printWindow.document.write('.patient-info div { font-size: 14px; }');
-        printWindow.document.write('.patient-info strong { color: #1e3a8a; display: block; font-size: 12px; text-transform: uppercase; margin-bottom: 4px; }');
-        printWindow.document.write('.rx-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }');
-        printWindow.document.write('.rx-table th { background: #1e3a8a; color: white; padding: 12px; text-align: left; font-size: 13px; text-transform: uppercase; }');
-        printWindow.document.write('.rx-table td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 14px; vertical-align: top; }');
+        printWindow.document.write("@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');");
+        printWindow.document.write('body { font-family: \'Inter\', -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; padding: 40px; color: #1e293b; max-width: 800px; margin: 0 auto; line-height: 1.5; -webkit-print-color-adjust: exact; print-color-adjust: exact; }');
+        printWindow.document.write('.header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #1e3a8a; padding-bottom: 20px; margin-bottom: 30px; }');
+        printWindow.document.write('.header-title h1 { margin: 0; color: #1e3a8a; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }');
+        printWindow.document.write('.header-title p { margin: 4px 0 0; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 500; }');
+        printWindow.document.write('.header-logo { width: 50px; height: 50px; background: #1e3a8a; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; }');
+        printWindow.document.write('.patient-info { background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; border: 1px solid #e2e8f0; }');
+        printWindow.document.write('.info-item strong { color: #64748b; display: block; font-size: 11px; text-transform: uppercase; margin-bottom: 4px; font-weight: 600; letter-spacing: 0.5px; }');
+        printWindow.document.write('.info-item span { font-size: 15px; color: #0f172a; font-weight: 600; }');
+        printWindow.document.write('.rx-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 14px; }');
+        printWindow.document.write('.rx-table th { background: #1e3a8a; color: white; padding: 12px 16px; text-align: left; font-size: 12px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }');
+        printWindow.document.write('.rx-table th:first-child { border-top-left-radius: 6px; }');
+        printWindow.document.write('.rx-table th:last-child { border-top-right-radius: 6px; }');
+        printWindow.document.write('.rx-table td { padding: 16px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }');
+        printWindow.document.write('.rx-table tr:last-child td { border-bottom: none; }');
         printWindow.document.write('.rx-table tr:nth-child(even) { background: #f8fafc; }');
-        printWindow.document.write('.notes-box { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 15px; margin-bottom: 30px; font-size: 14px; color: #92400e; }');
-        printWindow.document.write('.footer { margin-top: 50px; text-align: right; font-size: 13px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 20px; }');
-        printWindow.document.write('.footer .sig-line { border-top: 1px solid #0f172a; width: 220px; display: inline-block; margin-top: 50px; padding-top: 8px; color: #0f172a; font-weight: bold; }');
-        printWindow.document.write('@media print { body { padding: 20px; } .no-print { display: none; } }');
+        printWindow.document.write('.notes-box { background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 4px; padding: 16px; margin-bottom: 40px; font-size: 14px; color: #92400e; }');
+        printWindow.document.write('.notes-box strong { color: #78350f; }');
+        printWindow.document.write('.footer { margin-top: 60px; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #e2e8f0; padding-top: 20px; }');
+        printWindow.document.write('.disclaimer { font-size: 11px; color: #94a3b8; max-width: 60%; font-style: italic; }');
+        printWindow.document.write('.signature-block { text-align: center; width: 200px; }');
+        printWindow.document.write('.sig-line { border-top: 1px solid #0f172a; width: 100%; margin-top: 50px; padding-top: 8px; color: #0f172a; font-weight: 600; font-size: 13px; }');
+        printWindow.document.write('.print-btn { padding: 12px 24px; background: #1e3a8a; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; }');
+        printWindow.document.write('.print-btn:hover { background: #1e40af; }');
+        printWindow.document.write('@media print { body { padding: 20px; } .no-print { display: none; } .rx-table th { background: #1e3a8a !important; color: white !important; } .patient-info { background: #f8fafc !important; } .rx-table tr:nth-child(even) { background: #f8fafc !important; } }');
         printWindow.document.write('</style></head><body>');
         
-        printWindow.document.write('<div class="no-print" style="text-align: right; margin-bottom: 20px;"><button onclick="window.print(); window.close();" style="padding: 12px 24px; background: #1e3a8a; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px;">Print This Card</button></div>');
+        printWindow.document.write('<div class="no-print" style="text-align: right; margin-bottom: 20px;"><button onclick="window.print();" class="print-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg> Print / Save as PDF</button></div>');
         
-        printWindow.document.write('<div class="header"><h1>MNH RCH E-Clinic</h1><p>Official Dispensing Card & Prescription Receipt</p></div>');
+        printWindow.document.write('<div class="header">');
+        printWindow.document.write('<div class="header-title"><h1>MNH RCH E-Clinic</h1><p>Official Dispensing Card & Prescription Receipt</p></div>');
+        printWindow.document.write('<div class="header-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 28px; height: 28px;"><path d="M12 2v20M2 12h20"/></svg></div>');
+        printWindow.document.write('</div>');
         
         printWindow.document.write('<div class="patient-info">');
-        printWindow.document.write('<div><strong>Patient Name</strong>' + patientName + '</div>');
-        printWindow.document.write('<div><strong>Mother / Guardian</strong>' + motherName + '</div>');
-        printWindow.document.write('<div><strong>Date Dispensed</strong>' + group.date + '</div>');
-        printWindow.document.write('<div><strong>Pharmacist</strong>' + esc(group.pharmacist) + '</div>');
+        printWindow.document.write('<div class="info-item"><strong>Patient Name</strong><span>' + patientName + '</span></div>');
+        printWindow.document.write('<div class="info-item"><strong>Mother / Guardian</strong><span>' + motherName + '</span></div>');
+        printWindow.document.write('<div class="info-item"><strong>Date Dispensed</strong><span>' + group.date + '</span></div>');
+        printWindow.document.write('<div class="info-item"><strong>Pharmacist</strong><span>' + esc(group.pharmacist) + '</span></div>');
         printWindow.document.write('</div>');
 
         printWindow.document.write('<table class="rx-table">');
@@ -770,7 +783,7 @@
             printWindow.document.write('<tr>');
             printWindow.document.write('<td><strong>' + esc(item.item_name || 'Medication') + '</strong></td>');
             printWindow.document.write('<td>' + esc(item.regimen || '-') + '</td>');
-            printWindow.document.write('<td>' + esc(item.quantity) + ' ' + esc(item.unit || '') + (item.months_supply ? '<br><small>(' + item.months_supply + ' mo supply)</small>' : '') + '</td>');
+            printWindow.document.write('<td>' + esc(item.quantity) + ' ' + esc(item.unit || '') + (item.months_supply ? '<br><small style="color:#64748b;">(' + item.months_supply + ' mo supply)</small>' : '') + '</td>');
             printWindow.document.write('<td>' + esc(item.instructions || '-') + '</td>');
             printWindow.document.write('</tr>');
         });
@@ -781,8 +794,65 @@
         }
 
         printWindow.document.write('<div class="footer">');
-        printWindow.document.write('<div class="sig-line">Pharmacist Signature & Official Stamp</div>');
-        printWindow.document.write('<p style="margin-top: 30px; font-size: 12px;">Keep this card for your records. Bring it to your next clinic visit. For emergencies, contact your nearest health facility.</p>');
+        printWindow.document.write('<div class="disclaimer">Keep this card for your records. Bring it to your next clinic visit. For emergencies, contact your nearest health facility.</div>');
+        printWindow.document.write('<div class="signature-block"><div class="sig-line">Pharmacist Signature & Official Stamp</div></div>');
+        printWindow.document.write('</div>');
+        
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+    };
+
+    // Legacy fallback for simple text prescriptions (Updated to match new elegant style)
+    window.printDispensingCard = function(visitId, dateStr, prescriptionText) {
+        var patientName = currentPatient ? esc(currentPatient.child_name || 'Child') : 'Patient';
+        var motherName = currentPatient ? esc(currentPatient.mother_name || 'Mother') : 'Mother';
+        var dateFormatted = formatDate(dateStr);
+        
+        var printWindow = window.open('', '_blank', 'width=800,height=600');
+        printWindow.document.write('<!DOCTYPE html><html><head><title>Dispensing Card</title>');
+        printWindow.document.write("<style>");
+        printWindow.document.write("@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');");
+        printWindow.document.write('body { font-family: \'Inter\', -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; padding: 40px; color: #1e293b; max-width: 800px; margin: 0 auto; line-height: 1.5; -webkit-print-color-adjust: exact; print-color-adjust: exact; }');
+        printWindow.document.write('.header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #1e3a8a; padding-bottom: 20px; margin-bottom: 30px; }');
+        printWindow.document.write('.header-title h1 { margin: 0; color: #1e3a8a; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }');
+        printWindow.document.write('.header-title p { margin: 4px 0 0; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 500; }');
+        printWindow.document.write('.header-logo { width: 50px; height: 50px; background: #1e3a8a; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; }');
+        printWindow.document.write('.patient-info { background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; border: 1px solid #e2e8f0; }');
+        printWindow.document.write('.info-item strong { color: #64748b; display: block; font-size: 11px; text-transform: uppercase; margin-bottom: 4px; font-weight: 600; letter-spacing: 0.5px; }');
+        printWindow.document.write('.info-item span { font-size: 15px; color: #0f172a; font-weight: 600; }');
+        printWindow.document.write('.rx-box { border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; min-height: 200px; background: #fff; }');
+        printWindow.document.write('.rx-title { font-weight: 700; font-size: 16px; color: #1e3a8a; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px; }');
+        printWindow.document.write('.rx-content { font-size: 15px; line-height: 1.8; color: #0f172a; white-space: pre-wrap; }');
+        printWindow.document.write('.footer { margin-top: 60px; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #e2e8f0; padding-top: 20px; }');
+        printWindow.document.write('.disclaimer { font-size: 11px; color: #94a3b8; max-width: 60%; font-style: italic; }');
+        printWindow.document.write('.signature-block { text-align: center; width: 200px; }');
+        printWindow.document.write('.sig-line { border-top: 1px solid #0f172a; width: 100%; margin-top: 50px; padding-top: 8px; color: #0f172a; font-weight: 600; font-size: 13px; }');
+        printWindow.document.write('.print-btn { padding: 12px 24px; background: #1e3a8a; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; }');
+        printWindow.document.write('.print-btn:hover { background: #1e40af; }');
+        printWindow.document.write('@media print { body { padding: 20px; } .no-print { display: none; } .patient-info { background: #f8fafc !important; } }');
+        printWindow.document.write('</style></head><body>');
+        
+        printWindow.document.write('<div class="no-print" style="text-align: right; margin-bottom: 20px;"><button onclick="window.print();" class="print-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg> Print / Save as PDF</button></div>');
+        
+        printWindow.document.write('<div class="header">');
+        printWindow.document.write('<div class="header-title"><h1>MNH RCH E-Clinic</h1><p>Official Dispensing Card & Prescription Receipt</p></div>');
+        printWindow.document.write('<div class="header-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 28px; height: 28px;"><path d="M12 2v20M2 12h20"/></svg></div>');
+        printWindow.document.write('</div>');
+        
+        printWindow.document.write('<div class="patient-info">');
+        printWindow.document.write('<div class="info-item"><strong>Patient</strong><span>' + patientName + '</span></div>');
+        printWindow.document.write('<div class="info-item"><strong>Mother / Guardian</strong><span>' + motherName + '</span></div>');
+        printWindow.document.write('<div class="info-item"><strong>Date</strong><span>' + dateFormatted + '</span></div>');
+        printWindow.document.write('</div>');
+        
+        printWindow.document.write('<div class="rx-box">');
+        printWindow.document.write('<div class="rx-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> Medications Dispensed</div>');
+        printWindow.document.write('<div class="rx-content">' + esc(prescriptionText).replace(/\n/g, '<br>') + '</div>');
+        printWindow.document.write('</div>');
+        
+        printWindow.document.write('<div class="footer">');
+        printWindow.document.write('<div class="disclaimer">Keep this card for your records. Bring it to your next clinic visit. For emergencies, contact your nearest health facility.</div>');
+        printWindow.document.write('<div class="signature-block"><div class="sig-line">Pharmacist Signature & Official Stamp</div></div>');
         printWindow.document.write('</div>');
         
         printWindow.document.write('</body></html>');
