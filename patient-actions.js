@@ -242,12 +242,20 @@
     // 5. DASHBOARD LOADER
     // ==========================================
     async function loadMotherDashboard() {
-        var phone = localStorage.getItem('mnh_user_phone');
+                var phone = localStorage.getItem('mnh_user_phone');
         var name = localStorage.getItem('mnh_user_name');
+
+        // Primary source: authenticated session phone
+        try {
+            var sess = await supabase.auth.getSession();
+            if (sess.data && sess.data.session && sess.data.session.user) {
+                phone = sess.data.session.user.phone || phone;
+            }
+        } catch (e) {}
 
         if (!phone) {
             console.warn('[Patient Actions] No user phone found. Redirecting.');
-            window.location.href = 'register.html';
+            window.location.href = 'mother-login.html';
             return;
         }
 
