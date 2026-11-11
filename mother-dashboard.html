@@ -673,28 +673,6 @@
     </main>
 
         <script src="/patient-actions.js?v=12"></script>
-
-    <!-- AUTH GUARD: Redirect to login if no valid session -->
-    <script>
-        (async function () {
-            var SUPABASE_URL = 'https://fmaaudmdgmgklvqcmvad.supabase.co';
-            var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E';
-            var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-            try {
-                var sess = await sb.auth.getSession();
-                if (!sess.data || !sess.data.session) {
-                    // No valid session - kick to login
-                    window.location.replace('mother-login.html');
-                    return;
-                }
-                // Session exists - patient-actions.js will load the dashboard
-            } catch (e) {
-                window.location.replace('mother-login.html');
-            }
-        })();
-    </script>
-
     <script src="/mega-brain.js?v=1"></script>
 </body>
 </html>
