@@ -2,360 +2,298 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#1e3a8a">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mother Login - MNH RCH</title>
-    <link rel="stylesheet" href="/style.css?v=7">
+    <link rel="stylesheet" href="/style.css?v=4">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        body {
-            background: linear-gradient(135deg, #FFFFF0 0%, #FDF5E6 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .login-container {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 12px 32px rgba(30, 58, 138, 0.12);
-            max-width: 420px;
-            width: 100%;
-        }
-
-        .login-header {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .login-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            color: #1e3a8a;
-            padding: 6px 14px;
-            border-radius: 100px;
-            font-size: 12px;
-            font-weight: 700;
-            margin-bottom: 16px;
-        }
-
-        .login-header h1 {
-            font-size: 28px;
-            font-weight: 800;
-            color: #0f172a;
-            margin: 0 0 8px 0;
-            letter-spacing: -0.02em;
-        }
-
-        .login-header p {
-            color: #64748b;
-            font-size: 14px;
-            margin: 0;
-            line-height: 1.6;
-        }
-
-        .form-group {
+        #login_form .form-group {
             margin-bottom: 20px;
         }
 
-        .form-group label {
+        #login_form label {
             display: block;
             font-size: 13px;
             font-weight: 600;
-            color: #0f172a;
+            color: var(--text-dark);
             margin-bottom: 8px;
+            letter-spacing: -0.01em;
         }
 
-        .form-group input {
+        #login_form input[type="tel"] {
             width: 100%;
-            padding: 14px 16px;
+            padding: 14px 16px 14px 46px;
             font-size: 16px;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 10px;
+            color: var(--text-dark);
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 8px;
             outline: none;
+            transition: all 0.2s;
             font-family: 'Inter', sans-serif;
             box-sizing: border-box;
-            background: #f8fafc;
-            transition: all 0.2s;
         }
 
-        .form-group input:focus {
-            border-color: #3b82f6;
-            background: white;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        #login_form input[type="tel"]::placeholder {
+            color: #94a3b8;
+            font-size: 15px;
         }
 
-        .btn-primary {
-            width: 100%;
-            padding: 14px;
+        #login_form input[type="tel"]:focus {
+            border-color: var(--blue-accent);
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .phone-wrap {
+            position: relative;
+        }
+
+        .phone-wrap svg {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: #94a3b8;
+            pointer-events: none;
+        }
+
+        .remember-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 4px 0 24px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .remember-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--blue-accent);
+            cursor: pointer;
+        }
+
+        .remember-row span {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .login-error {
+            display: none;
+            margin-top: 20px;
+            padding: 16px;
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            border-radius: 12px;
+            color: #991b1b;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .login-error a {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 20px;
             background: #1e3a8a;
             color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            background: #3b82f6;
-            transform: translateY(-1px);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .otp-status {
-            padding: 14px;
-            border-radius: 10px;
-            font-size: 14px;
-            margin-bottom: 16px;
-            text-align: center;
-            line-height: 1.5;
-            display: none;
-        }
-
-        .otp-status.show { display: block; }
-        .otp-status.error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-        .otp-status.success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
-        .otp-status.info { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
-
-        #otp_input_section {
-            display: none;
-            margin-top: 8px;
-            padding-top: 20px;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        #otp_input_section.show { display: block; }
-
-        .back-link {
-            text-align: center;
-            margin-top: 24px;
-            font-size: 14px;
-        }
-
-        .back-link a {
-            color: #3b82f6;
+            border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
         }
 
-        .security-note {
+        .alt-links {
             text-align: center;
-            margin-top: 20px;
-            font-size: 11px;
-            color: #94a3b8;
-            line-height: 1.5;
+            margin-top: 24px;
+            font-size: 14px;
+            color: var(--text-muted);
         }
 
-        @media (max-width: 480px) {
-            .login-container { padding: 28px 20px; }
-            .login-header h1 { font-size: 24px; }
+        .alt-links a {
+            color: var(--blue-accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .staff-link {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        .staff-link a {
+            color: var(--text-light);
+            text-decoration: underline;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-header">
-            <div class="login-badge">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 14px; height: 14px;">
+
+    <nav class="navbar">
+        <div class="container nav-inner">
+            <a href="index.html" class="back-link" style="margin: 0;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                Back to Home
+            </a>
+            <div class="logo-text" style="font-size: 16px;">
+                MNH RCH
+                <span style="font-size: 11px;">Mother Login</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container" style="padding-top: 40px; padding-bottom: 80px; max-width: 520px;">
+
+        <div style="text-align: center; margin-bottom: 32px;">
+            <div class="badge" style="margin-bottom: 16px; display: inline-flex;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                 </svg>
-                Secure Mother Portal Access
+                <span>Secure Mother Portal Access</span>
             </div>
-            <h1>Welcome Back</h1>
-            <p>We'll send a one-time code to your registered phone number to verify it's you.</p>
+            <h1 style="font-size: 30px; font-weight: 800; color: var(--text-dark); margin-bottom: 12px; letter-spacing: -0.02em;">Welcome Back</h1>
+            <p style="font-size: 15px; color: var(--text-muted); max-width: 420px; margin: 0 auto; line-height: 1.6;">Login with the phone number you used during registration to access your child's health record.</p>
         </div>
 
-        <div id="otp_status" class="otp-status"></div>
+        <form id="login_form" class="patient-card" style="padding: 36px; border-radius: 16px;">
 
-        <div class="form-group">
-            <label for="login_phone">Phone Number</label>
-            <input
-                type="tel"
-                id="login_phone"
-                inputmode="tel"
-                autocomplete="tel"
-                placeholder="e.g., 0712 345 678"
-            >
-        </div>
-
-        <button id="send_otp_btn" class="btn-primary" onclick="requestOTP()">
-            Send OTP Code
-        </button>
-
-        <div id="otp_input_section">
             <div class="form-group">
-                <label for="otp_code">6-digit Code</label>
-                <input
-                    type="text"
-                    id="otp_code"
-                    inputmode="numeric"
-                    autocomplete="one-time-code"
-                    placeholder="••••••"
-                    maxlength="6"
-                    style="letter-spacing: 8px; text-align: center; font-size: 20px; font-weight: 700;"
-                >
+                <label for="login_phone">Phone Number</label>
+                <div class="phone-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
+                    <input type="tel" id="login_phone" inputmode="tel" autocomplete="tel" required placeholder="e.g., 0712345678">
+                </div>
             </div>
-            <button id="verify_otp_btn" class="btn-primary" onclick="verifyOTP()">
-                Verify & Login
+
+            <label class="remember-row">
+                <input type="checkbox" id="remember_phone">
+                <span>Remember my phone on this device</span>
+            </label>
+
+            <button type="submit" id="login_btn" class="btn-primary" style="width: 100%; padding: 14px 28px; font-size: 15px; font-weight: 600; border-radius: 100px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                    <polyline points="10 17 15 12 10 7"></polyline>
+                    <line x1="15" y1="12" x2="3" y2="12"></line>
+                </svg>
+                Login to My Dashboard
             </button>
-            <p style="text-align: center; margin-top: 12px; font-size: 13px; color: #64748b;">
-                Didn't receive it? <a href="#" onclick="requestOTP(); return false;" style="color: #3b82f6; font-weight: 600; text-decoration: none;">Resend code</a>
-            </p>
-        </div>
 
-        <div class="back-link">
-            <a href="index.html">← Back to Home</a>
-        </div>
+            <div id="login_error" class="login-error"></div>
+        </form>
 
-        <p class="security-note">
-            Your health data is protected. We never ask for passwords — only a code sent to your phone.
-        </p>
-    </div>
+        <p class="alt-links">New to MNH RCH? <a href="register.html">Register your family</a></p>
+        <p class="staff-link">Clinic staff (nurse, doctor, admin)? <a href="login.html">Use Staff Login</a></p>
+
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>Built with pride in Tanzania · <strong>MNH RCH E-Clinic</strong> · Aligned with Dira ya Taifa 2050</p>
+        </div>
+    </footer>
 
     <script>
-        var SUPABASE_URL = 'https://fmaaudmdgmgklvqcmvad.supabase.co';
-        var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E';
-        var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        (function () {
+            var SUPABASE_URL = 'https://fmaaudmdgmgklvqcmvad.supabase.co';
+            var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtYWF1ZG1kZ21na2x2cWNtdmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMzk2MjMsImV4cCI6MjEwMjcxNTYyM30.yGKizF1gywUIctA_VKDVuI9YO8rH7i-kfQ2RfDb2u_E';
+            var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        var rateLimitAttempts = {};
+            var phoneInput = document.getElementById('login_phone');
+            var rememberBox = document.getElementById('remember_phone');
+            var errorBox = document.getElementById('login_error');
 
-        function setStatus(msg, type) {
-            var el = document.getElementById('otp_status');
-            el.textContent = msg;
-            el.className = 'otp-status show ' + type;
-        }
-
-        function normalizePhone(phone) {
-            var digits = phone.replace(/\D/g, '');
-            if (digits.length === 9 && (digits[0] === '6' || digits[0] === '7')) return '+255' + digits;
-            if (digits.length === 10 && digits[0] === '0') return '+255' + digits.slice(1);
-            if (digits.length === 12 && digits.indexOf('255') === 0) return '+' + digits;
-            if (digits.length === 13 && digits[0] === '+') return digits;
-            return null;
-        }
-
-        function checkRateLimit(phone) {
-            var now = Date.now();
-            var windowMs = 15 * 60 * 1000;
-            if (!rateLimitAttempts[phone]) rateLimitAttempts[phone] = [];
-            rateLimitAttempts[phone] = rateLimitAttempts[phone].filter(function (t) { return now - t < windowMs; });
-            if (rateLimitAttempts[phone].length >= 3) return false;
-            rateLimitAttempts[phone].push(now);
-            return true;
-        }
-
-        async function checkAuth() {
-            try {
-                var sess = await sb.auth.getSession();
-                if (sess.data && sess.data.session) {
-                    window.location.href = 'mother-dashboard.html';
-                }
-            } catch (e) {}
-        }
-
-        window.requestOTP = async function () {
-            var phoneInput = document.getElementById('login_phone').value.trim();
-            var sendBtn = document.getElementById('send_otp_btn');
-            var normalized = normalizePhone(phoneInput);
-
-            if (!normalized) {
-                setStatus('Please enter a valid Tanzanian phone number.', 'error');
-                return;
+            var urlPhone = new URLSearchParams(window.location.search).get('phone');
+            var remembered = localStorage.getItem('mnh_remember_phone');
+            if (urlPhone) {
+                phoneInput.value = urlPhone;
+            } else if (remembered) {
+                phoneInput.value = remembered;
+                rememberBox.checked = true;
             }
 
-            if (!checkRateLimit(normalized)) {
-                setStatus('Too many attempts. Please wait 15 minutes before trying again.', 'error');
-                return;
+            function showError(message, withRegisterLink) {
+                errorBox.style.display = 'block';
+                errorBox.innerHTML = message + (withRegisterLink
+                    ? '<br><a href="register.html">Register Now</a>'
+                    : '');
             }
 
-            sendBtn.disabled = true;
-            sendBtn.textContent = 'Sending...';
+            document.getElementById('login_form').addEventListener('submit', async function (e) {
+                e.preventDefault();
+                errorBox.style.display = 'none';
 
-            try {
-                var { error } = await sb.auth.signInWithOtp({
-                    phone: normalized,
-                    options: { shouldCreateUser: false }
-                });
-
-                // Generic message regardless of outcome - prevents phone enumeration
-                setStatus('If this number is registered, you will receive an OTP via SMS shortly.', 'info');
-                document.getElementById('otp_input_section').classList.add('show');
-                document.getElementById('otp_code').focus();
-            } catch (err) {
-                setStatus('Could not send OTP. Please try again.', 'error');
-            }
-
-            sendBtn.disabled = false;
-            sendBtn.textContent = 'Send OTP Code';
-        };
-
-        window.verifyOTP = async function () {
-            var phoneInput = document.getElementById('login_phone').value.trim();
-            var otp = document.getElementById('otp_code').value.trim();
-            var verifyBtn = document.getElementById('verify_otp_btn');
-            var normalized = normalizePhone(phoneInput);
-
-            if (!otp || otp.length !== 6 || !/^\d{6}$/.test(otp)) {
-                setStatus('Please enter the 6-digit code sent to your phone.', 'error');
-                return;
-            }
-
-            verifyBtn.disabled = true;
-            verifyBtn.textContent = 'Verifying...';
-
-            try {
-                var { data, error } = await sb.auth.verifyOtp({
-                    phone: normalized,
-                    token: otp,
-                    type: 'sms'
-                });
-
-                if (error) {
-                    setStatus('Invalid or expired code. Please try again.', 'error');
-                    verifyBtn.disabled = false;
-                    verifyBtn.textContent = 'Verify & Login';
+                var phone = phoneInput.value.trim();
+                if (!phone) {
+                    showError('Please enter your phone number.', false);
                     return;
                 }
 
-                setStatus('Verified! Redirecting to your dashboard...', 'success');
-                setTimeout(function () {
-                    window.location.href = 'mother-dashboard.html';
-                }, 800);
-            } catch (err) {
-                setStatus('Verification failed. Please try again.', 'error');
-                verifyBtn.disabled = false;
-                verifyBtn.textContent = 'Verify & Login';
-            }
-        };
+                var btn = document.getElementById('login_btn');
+                var originalHTML = btn.innerHTML;
+                btn.innerHTML = 'Checking...';
+                btn.disabled = true;
 
-        // Allow Enter key to submit OTP
-        document.getElementById('otp_code').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') verifyOTP();
-        });
-        document.getElementById('login_phone').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') requestOTP();
-        });
+                try {
+                    var res = await supabaseClient
+                        .from('patients')
+                        .select('id, mother_name, phone_number')
+                        .eq('phone_number', phone)
+                        .order('created_at', { ascending: false })
+                        .limit(1);
 
-        checkAuth();
+                    if (res.error) throw res.error;
+
+                    if (!res.data || res.data.length === 0) {
+                        showError('This phone number is not registered. Please register first.', true);
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                        return;
+                    }
+
+                    localStorage.setItem('mnh_user_phone', phone);
+                    localStorage.setItem('mnh_user_name', res.data[0].mother_name);
+
+                    if (rememberBox.checked) {
+                        localStorage.setItem('mnh_remember_phone', phone);
+                    } else {
+                        localStorage.removeItem('mnh_remember_phone');
+                    }
+
+                    btn.innerHTML = 'Welcome back, ' + res.data[0].mother_name.split(' ')[0] + '!';
+                    btn.style.background = '#16a34a';
+
+                    setTimeout(function () {
+                        window.location.href = 'mother-dashboard.html';
+                    }, 800);
+
+                } catch (err) {
+                    console.error('[Mother Login] Error:', err);
+                    showError('Something went wrong while checking your phone number. Please try again.', false);
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                }
+            });
+        })();
     </script>
 </body>
 </html>
